@@ -1,0 +1,13 @@
+.active-file {
+    background-color: #0000FF;
+    color: #e1e1e1;
+}
+
+.inactive-file {
+    color: #e1e1e1;
+}
+
+.file-checkbox {
+    width: 10px;
+    height: 10px;
+}
