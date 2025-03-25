@@ -5,5 +5,6 @@ export const FileObject = ({name, status, active,  changeStatus, scrollRef}) => 
 
     return <div className={active ? "active-file" : "inactive-file"} ref={scrollRef}>
         <label>{name} <input type={"checkbox"} className={"file-checkbox"} checked={status} onChange={changeStatus}/></label>
+        <sp-action-button>Go to</sp-action-button>
     </div>
 }

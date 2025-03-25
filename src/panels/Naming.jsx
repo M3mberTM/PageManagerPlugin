@@ -1,28 +1,28 @@
 import React from 'react';
-import "./Naming.css"
-import {useState} from "react";
+import "./Naming.css";
+import "../components/CommonStyles.css";
+import {useState, useEffect, useRef} from "react";
+import {Section} from "../components/Section";
 import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch} from "react-redux";
+import {createRoot} from "react-dom";
+import {GuideModal} from "../components/GuideModal";
 
 export const Naming = () => {
     const exampleFilename = "FileName001"
     const exampleFileNumber = 1
-    const [isCheatsheet, setIsCheatsheet] = useState(undefined)
     const [shownName, setShownName] = useState("")
     const dispatch = useDispatch()
+    let guideDialog = null;
 
-    const handleCheatsheetCheck = () => {
-        setIsCheatsheet(isCheatsheet == null ? true : undefined)
-        console.log(`Cheatsheet checkbox changed to: ${isCheatsheet}`)
+    const addLeadingZeros = (num, size) => {
+        num = num.toString();
+        while (num.length < size) num = "0" + num;
+        return num;
     }
 
-   const addLeadingZeros = (num, size) => {
-       num = num.toString();
-       while (num.length < size) num = "0" + num;
-       return num;
-   }
-
     const handleInputChange = (inputName) => {
+        console.log(inputName);
         try {
             const originalNameAppend = inputName.replaceAll("%og%", exampleFilename)
             const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(exampleFileNumber))
@@ -41,24 +41,56 @@ export const Naming = () => {
             console.log(e)
         }
     }
-    return <div id={"naming"}>
-        <sp-heading size={"L"}>Naming</sp-heading>
-        <sp-divider size="small"></sp-divider>
 
-        <sp-checkbox checked={isCheatsheet} onClick={handleCheatsheetCheck}>Show Cheatsheet</sp-checkbox>
-        <br/>
-        {isCheatsheet &&
-            <p size={"S"} id={"cheatsheet"}>
-                Example filename: FileName001
-                Command outline = %command% <br/>
-                Original name = og <br/>
-                Page number = num <br/>
-                Add leading zeros = an | where n represents the amount of zeros
-            </p>
+    const closeGuideDialog = async () => {
+        guideDialog.close()
+    }
+
+    const openGuideDialog = async () => {
+        if (!guideDialog) {
+            guideDialog = document.createElement("dialog")
+            guideDialog.style.padding = "1rem"
+
+            const root = createRoot(guideDialog)
+            root.render(<GuideModal dialog={guideDialog} handleClose={closeGuideDialog} />)
         }
-        <br/>
-        <input type={"text"} onChange={e => handleInputChange(e.target.value)}/>
-        <sp-body>Naming template here</sp-body>
-        <sp-heading size={"XXS"}>{shownName}</sp-heading>
+        document.body.appendChild(guideDialog)
+
+        guideDialog.onclose = () => {
+            guideDialog.remove()
+            guideDialog = null
+        }
+
+        await guideDialog.uxpShowModal({
+            title: "Template guide",
+        })
+    }
+
+    return <div id={"naming"}>
+        {/*Heading*/}
+        <Section sectionName={"Naming"} isTransparent={true}>
+            {/*
+
+            Command outline = %command% <br/>
+            Original name = og <br/>
+            Page number = num <br/>
+            Add leading zeros = an | where n represents the amount of zeros
+            */}
+
+            <sp-heading size={"XXS"}>{shownName.length < 1 ? "FileName001" : shownName}</sp-heading>
+            <sp-textfield class={"button-100"}></sp-textfield>
+            <sp-action-button class={"button-100"}>Set</sp-action-button>
+            <sp-action-button class={"button-100"} onClick={openGuideDialog}>Guide</sp-action-button>
+        </Section>
+
+        <Section isTransparent={true} sectionName={"Presets"}>
+            <div class={"heading-style"}>
+                <div class={"fit-row-style"}>
+                    <sp-action-button style={{width: "50%"}}>Load</sp-action-button>
+                    <sp-action-button style={{width: "50%"}}>Remove</sp-action-button>
+                </div>
+                <sp-action-button class={"button-100"}>Save preset</sp-action-button>
+            </div>
+        </Section>
     </div>
 }

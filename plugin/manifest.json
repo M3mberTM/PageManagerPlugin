@@ -156,7 +156,7 @@
       "type": "panel",
       "id": "export",
       "label": {
-        "default": "Export"
+        "default": "Movement"
       },
       "minimumSize": {
         "width": 230,
