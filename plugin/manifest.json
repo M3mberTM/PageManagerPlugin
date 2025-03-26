@@ -7,7 +7,7 @@
   "host": [
     {
       "app": "PS",
-      "minVersion": "24.7.1"
+      "minVersion": "22.0"
     }
   ],
   "featureFlags": {
@@ -43,7 +43,7 @@
         "default": "Import"
       },
       "minimumSize": {
-        "width": 230,
+        "width": 245,
         "height": 200
       },
       "maximumSize": {
@@ -51,11 +51,11 @@
         "height": 2000
       },
       "preferredDockedSize": {
-        "width": 230,
+        "width": 250,
         "height": 300
       },
       "preferredFloatingSize": {
-        "width": 230,
+        "width": 250,
         "height": 300
       },
       "icons": [
