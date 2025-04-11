@@ -8,77 +8,147 @@ import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {ConvertModal} from "../components/ConvertModal";
 
-
-const fs = require('uxp').storage.localFileSystem;
+const storage = require("uxp").storage
+const fs = storage.localFileSystem;
 const app = require("photoshop").app;
 const core = require('photoshop').core;
 
 export const Import = () => {
-    const [importPath, setImportPath] = useState(undefined)
-    const [exportPath, setExportPath] = useState(undefined)
+    const [importPath, setImportPath] = useState("")
+    const [exportPath, setExportPath] = useState("")
     const [isExportChecked, setIsExportChecked] = useState(true)
     const [fullExportPath, setFullExportPath] = useState("")
+    const [directories, setDirectories] = useState({})
+    const dirs = useSelector((state) => state.folderSlice.value)
     const dispatch = useDispatch()
     let convertDialog = null;
 
     useEffect(() => {
-        if (exportPath == undefined) {
+        setDirectories(dirs)
+    }, [dirs])
+
+    useEffect(() => {
+        // automatically sets the export path same as import path when you first select import path to not have to select twice for the same dir
+        if (exportPath.length < 1) {
             setExportPath(importPath)
         }
     }, [importPath])
 
     const getTruncatedString = (maxLength, text) => {
-        const actualLength = maxLength - 3
-        const textLength = text.length
-        console.log(textLength)
-        if (textLength > actualLength) {
-            return "..." + text.slice(textLength - actualLength, textLength)
-        } else {
-            return "..." + text
+        try {
+            const actualLength = maxLength - 3
+            const textLength = text.length
+            console.log(textLength)
+            if (textLength > actualLength) {
+                return "..." + text.slice(textLength - actualLength, textLength)
+            } else {
+                return "..." + text
+            }
+        } catch (e) {
+            alert("Function Truncated string")
+            alert(e)
         }
     }
     const getFolder = async (setter) => {
+        try {
         console.log("Getting folder")
         const folder = await fs.getFolder();
+        if (folder == null) {
+            return
+        }
         console.log(`Path to folder: ${fs.getNativePath(folder)}`)
         setter(getTruncatedString(40, folder.nativePath))
         return folder
+        } catch(e) {
+            alert("Function get folder")
+            alert(e)
+        }
     }
 
-    const getImportFolder = async (setter) => {
-        console.log("Import folder")
-        const folder = await getFolder(setter)
-        const entries = await folder.getEntries()
-        const allFiles = entries.filter(entry => {
-            const entryName = entry.name
-            return entry.isFile && entryName.substring(entryName.length-3) != "ini"
-        })
-        dispatch(setFiles(allFiles.map((file, index) => {
-            return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index}
-        })))
-        dispatch(setImportFolder(folder.nativePath))
-        setFullExportPath(folder.nativePath)
+    const getFiles = async (setter) => {
+        try {
+            console.log("Getting files")
+            const files = await fs.getFileForOpening({allowMultiple: true, types: storage.fileTypes.images.concat(["jpeg"])})
+            if (files.length < 1) {
+                return
+            }
+            const filePath = files[0].nativePath
+            const folder= filePath.substring(0,filePath.lastIndexOf("\\"))
+            setter(getTruncatedString(40, folder))
+            dispatch(setImportFolder(folder))
+            if (directories.exportDir.length < 1) {
+                dispatch(setExportFolder(folder))
+            }
+            setFullExportPath(folder)
+            return files
+        } catch(e) {
+            alert("Function get files")
+            alert(e)
+        }
+    }
+
+    const getImportFiles = async (setter) => {
+        try {
+            console.log("Import folder")
+            const files = await getFiles(setter)
+
+            if (files == undefined) {
+                return
+            }
+            const allFiles = files.filter(entry => {
+                const entryName = entry.name
+                return entry.isFile && entryName.substring(entryName.length-3) != "ini"
+            })
+            dispatch(setFiles(allFiles.map((file, index) => {
+                return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", isDouble: "", pageNumber: index, id:index}
+            })))
+        } catch(e) {
+            alert("Function get Import folder")
+            alert(e)
+        }
     }
 
     const getExportFolder = async (setter) => {
-        console.log("Export folder")
-        const folder = await getFolder(setter)
-        dispatch(setExportFolder(folder.nativePath))
+        try {
+            console.log("Export folder")
+            const folder = await getFolder(setter)
+
+            if (folder == undefined) {
+                return
+            }
+
+            dispatch(setExportFolder(folder.nativePath))
+        } catch(e) {
+            alert("Function get export folder")
+            alert(e)
+        }
     }
 
     const handleExportCheck = () => {
-        const newExportChecked = !isExportChecked;
-        setIsExportChecked(newExportChecked)
-        console.log(`Export switched to: ${newExportChecked}`)
-        dispatch(setShouldExport(newExportChecked))
+        try {
+            const newExportChecked = !isExportChecked;
+            setIsExportChecked(newExportChecked)
+            console.log(`Export switched to: ${newExportChecked}`)
+            dispatch(setShouldExport(newExportChecked))
+        } catch (e) {
+            alert("Function handle Export check")
+            alert(e)
+        }
     }
 
     const convertFiles = async (extension, folder) => {
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
-        await closeConvertDialog()
-
         try {
+            if (folder.length < 1 ) {
+                alert("No folder selected")
+                return
+            }
+            if (extension.length < 1) {
+                alert("No extension selected")
+                return
+            }
+            await closeConvertDialog()
             const folderEntry = await fs.getEntryWithUrl(folder)
             const importFolderEntry = await fs.getEntryWithUrl(fullExportPath)
             const entries = await importFolderEntry.getEntries()
@@ -93,57 +163,73 @@ export const Import = () => {
                 await closeCurrentFile()
             }
         } catch (e) {
-            console.log(e)
+            alert("Function convert files")
+            alert(e)
         }
     }
     const closeConvertDialog = async () => {
-        convertDialog.close()
+        try {
+            convertDialog.close()
+        } catch(e) {
+            alert("Function close convert dialog")
+            alert(e)
+        }
     }
 
     const openConvertDialog = async () => {
-        if (!convertDialog) {
-            convertDialog = document.createElement("dialog")
-            convertDialog.style.padding = "1rem"
+        try {
+            if (!convertDialog) {
+                convertDialog = document.createElement("dialog")
+                convertDialog.style.padding = "1rem"
 
-            const root = createRoot(convertDialog)
-            root.render(<ConvertModal dialog={convertDialog} handleClose={closeConvertDialog} convert={convertFiles}/>)
+                const root = createRoot(convertDialog)
+                root.render(<ConvertModal dialog={convertDialog} handleClose={closeConvertDialog} convert={convertFiles}/>)
+            }
+            document.body.appendChild(convertDialog)
+
+            convertDialog.onclose = () => {
+                convertDialog.remove()
+                convertDialog = null
+            }
+
+            await convertDialog.uxpShowModal({
+                title: "Convert project",
+            })
+        } catch(e) {
+            alert("Function open convert dialog")
+            alert(e)
         }
-        document.body.appendChild(convertDialog)
-
-        convertDialog.onclose = () => {
-            convertDialog.remove()
-            convertDialog = null
-        }
-
-        await convertDialog.uxpShowModal({
-            title: "Convert project",
-        })
     }
 
     const openFile = async (entry) => {
         try {
             await core.executeAsModal(async () => {await app.open(entry)})
         } catch(e) {
-            console.log(e)
+            alert("function open file")
+            alert(e)
         }
     }
 
     const exportFile = async (extension, folder) => {
-
-        switch (extension) {
-            case "png":
-                // Export into png function
-                console.log("png conversion")
-                await savePng(folder)
-                break
-            case "jpg":
-                // export into jpg function
-                console.log("jpg conversion")
-                await saveJpg(folder)
-                break
-            default:
-                console.log("Unknown extension")
-                break
+        try {
+            switch (extension) {
+                case "png":
+                    // Export into png function
+                    console.log("png conversion")
+                    await savePng(folder)
+                    break
+                case "jpg":
+                    // export into jpg function
+                    console.log("jpg conversion")
+                    await saveJpg(folder)
+                    break
+                default:
+                    console.log("Unknown extension")
+                    break
+            }
+        } catch(e) {
+            alert("Function export file")
+            alert(e)
         }
     }
 
@@ -158,7 +244,8 @@ export const Import = () => {
             console.log(entry)
             await core.executeAsModal(async () => {await doc.saveAs.png(entry)})
         } catch (e) {
-            console.log(e)
+            alert("Function save png")
+            alert(e)
         }
     }
 
@@ -174,8 +261,8 @@ export const Import = () => {
             console.log(entry)
             await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
         } catch (e) {
-            console.log("SAVE JPG")
-            console.log(e)
+            alert("Function save jpg")
+            alert(e)
         }
     }
 
@@ -186,7 +273,17 @@ export const Import = () => {
             await core.executeAsModal(async () => {await doc.close()})
 
         } catch (e) {
-            console.log(e)
+            alert("Function close current file")
+            alert(e)
+        }
+    }
+
+    const getPathValue = (currentPath) => {
+       // Returns a placeholder value for folders if the current path is empty
+        if (currentPath.length < 1) {
+            return "Path to folder"
+        } else {
+            return currentPath
         }
     }
 
@@ -194,28 +291,28 @@ export const Import = () => {
         {/*Importing*/}
         <Section sectionName={"Import"} isTransparent={true}>
             <sp-heading size={"S"} class={"heading-style"}>Choose import directory</sp-heading>
-            <sp-body size={"S"}>{importPath == null ? "path to directory" : importPath}</sp-body>
-            <sp-action-button class={"button-100"}  onClick={() => getImportFolder(setImportPath)}>Choose folder</sp-action-button>
+            <sp-body size={"S"}>{getPathValue(importPath)}</sp-body>
+            <sp-action-button class={"button-100"}  onClick={() => getImportFiles(setImportPath)}>Choose Files</sp-action-button>
         </Section>
         {/*Exporting*/}
         <Section sectionName={"Export"} isTransparent={true}>
             <div id={"export-details"}>
                 <div id={"export-psd"}>
                     <sp-heading size={"S"} class={"heading-style"}>Choose the export folder</sp-heading>
-                    <sp-body size={"S"}>{isExportChecked ? exportPath : "Disabled"}</sp-body>
+                    <sp-body size={"S"}>{isExportChecked ? getPathValue(exportPath) : "Disabled"}</sp-body>
                     <div class={"fit-row-style"}>
-                    <sp-action-button style={{width: "50%"}} onClick={() => getExportFolder(setExportPath)}>Choose folder</sp-action-button>
                         {isExportChecked ?
-                            <sp-action-button  style={{width: "50%"}} onClick={handleExportCheck}>Disable</sp-action-button>
+                            <sp-action-button  class={"width-50"} onClick={handleExportCheck}>Disable</sp-action-button>
                             :
                             <sp-action-button class={"unimportant-button"} style={{width: "50%"}} onClick={handleExportCheck}>Enable</sp-action-button>
                         }
+                        <sp-action-button class={"width-50"} onClick={() => getExportFolder(setExportPath)}>Choose folder</sp-action-button>
                     </div>
                 </div>
             </div>
         </Section>
                 <div id={"export-other"} style={{marginTop: "10px"}}>
-                    <sp-action-button class={"button-100"} variant={"primary"} onClick={openConvertDialog}>Convert</sp-action-button>
+                    <sp-action-button class={"button-100 highlight-button"} onClick={openConvertDialog}>Convert</sp-action-button>
                 </div>
     </div>
 }

@@ -2,7 +2,7 @@ import {createSlice} from '@reduxjs/toolkit';
 
 const folderSlice = createSlice({
     name: 'folderSlicer',
-    initialState: {value: {importDir: "", exportDir: "", shouldExport: undefined}},
+    initialState: {value: {importDir: "", exportDir: "", shouldExport: true}},
     reducers: {
         setImportFolder: (state, action) => {
             state.value.importDir = action.payload;

@@ -5,8 +5,9 @@ import "./Export.css";
 import "../components/CommonStyles.css";
 import {FileObject} from "../components/FileObject";
 import {useSelector} from "react-redux";
-import {setFiles} from "../reducers/fileSlice"
 import {useDispatch} from "react-redux";
+import {createRoot} from "react-dom";
+import {OverwriteModal} from "../components/OverwriteModal";
 
 const fs = require('uxp').storage.localFileSystem;
 const core = require('photoshop').core
@@ -26,7 +27,7 @@ export const Export = () => {
     const [isStart, setIsStart] = useState(true)
     const [currentPageName, setCurrentPageName] = useState("")
     const [showOverwritingAlert, setShowOverWritingAlert] = useState(false)
-    const [inputManualPageNum, setInputManualPageNum] = useState(0)
+    let overwriteAlert = null
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -52,26 +53,55 @@ export const Export = () => {
     }, [dirs])
 
     const elementScrollToView = () => {
-        scrollRef.current.scrollIntoView({behavior: 'smooth'})
+        try {
+            scrollRef.current.scrollIntoView({behavior: 'smooth'})
+        } catch (e) {
+            alert("Function elementScrollToView")
+            alert(e)
+        }
     }
     const openFile = async (pageNum) => {
-        const app = window.require("photoshop").app
-        const fileEntry = await fs.getEntryWithUrl(files[pageNum].filename)
-        await app.open(fileEntry)
+        try {
+            const app = window.require("photoshop").app
+            const fileEntry = await fs.getEntryWithUrl(files[pageNum].filename)
+            await app.open(fileEntry)
+        } catch (e) {
+            alert("Function openFile")
+            alert(e)
+        }
     }
 
     const openNextFile = async (pageNum) => {
         try {
             await core.executeAsModal(() => openFile(pageNum))
         } catch (e) {
-            console.log(e)
+            alert("Function openNextFile")
+            alert(e)
         }
+    }
+
+    const goToFile = async (pageIndex) => {
+       try {
+           const currentDoc = app.activeDocument
+           setCurrentPageIndex(pageIndex)
+           const newPageNum = files[pageIndex].pageNumber
+           setPageNumber(newPageNum)
+           await core.executeAsModal(() => openFile(pageIndex))
+           await core.executeAsModal(() => closeFile(currentDoc))
+       } catch(e){
+           alert("Function goToFile")
+           alert(e)
+       }
     }
 
     const goToNextFile = async (isForward) => {
         try {
+            if (isStart) {
+                setIsStart(false)
+            }
             const current = currentPageIndex
-            const currentPageNum = pageNumber
+            console.log(currentPageIndex)
+            const currentPageNum = files[currentPageIndex].pageNumber
             const filesLength = files.length
             const currentDoc = app.activeDocument
             console.log(currentDoc)
@@ -82,7 +112,10 @@ export const Export = () => {
                     console.log(`Page number: ${currentPageNum + 1}`)
                     console.log(`Current page: ${current + 1}`)
                     await openNextFile(current + 1)
-                    getPageName(currentPageNum + 1)
+                    getPageName(current + 1)
+                    await core.executeAsModal(() => closeFile(currentDoc))
+                } else {
+                    alert("Congratulation, you are done!")
                 }
             } else {
                 if (current != 0) {
@@ -91,14 +124,15 @@ export const Export = () => {
                     console.log(`Page number: ${currentPageNum - 1}`)
                     console.log(`Current page: ${current + 1}`)
                     await openNextFile(current - 1)
-                    getPageName(currentPageNum - 1)
+                    getPageName(current - 1)
+                    await core.executeAsModal(() => closeFile(currentDoc))
                 }
             }
             elementScrollToView()
-            await core.executeAsModal(() => closeFile(currentDoc))
             console.log("Closed the file")
         } catch (e) {
-            console.log(e)
+            alert("Function goToNextFile")
+            alert(e)
         }
     }
 
@@ -106,91 +140,239 @@ export const Export = () => {
         try {
             await document.close()
         } catch (e) {
-            console.log(e)
+            alert("Function closeFile")
+            alert(e)
         }
     }
 
     const changeFileStatus = (index) => {
-        const file = files[index]
-        const newFile = {...file, isDone: !file.isDone}
-        const newFiles = files.map((file, i) => {
-            if (index == i) {
-                return newFile
-            } else {
-                return file
-            }
-        })
-        setFiles(newFiles)
+        try {
+            const file = files[index]
+            const newFile = {...file, isDone: !file.isDone}
+            const newFiles = files.map((file) => {
+                if (file.id == newFile.id) {
+                    return newFile
+                } else {
+                    return file
+                }
+            })
+            setFiles(newFiles)
 
-        if (newFile.isDone) {
-            setCompletedNum(completedNum + 1)
-        } else {
-            setCompletedNum(completedNum - 1)
+            if (newFile.isDone) {
+                setCompletedNum(completedNum + 1)
+            } else {
+                setCompletedNum(completedNum - 1)
+            }
+        } catch (e) {
+            alert("Function changeFileStatus")
+            alert(e)
         }
     }
 
     const openStartingFile = async () => {
-        if (files.length > 0) {
-            await openNextFile(0)
-            setIsStart(false)
-            getPageName(0)
-        } else {
-            alert("No files were loaded")
+        try {
+            if (files.length > 0) {
+                await openNextFile(0)
+                setIsStart(false)
+                getPageName(0)
+            } else {
+                alert("No files were loaded")
+            }
+        } catch (e) {
+            alert("Function openStartingFile")
+            alert(e)
         }
     }
 
     const addLeadingZeros = (num, size) => {
-        return String(num).padStart(size, '0')
+        try {
+            return String(num).padStart(size, '0')
+        } catch (e) {
+            alert("Function aadLeadingZeros")
+            alert(e)
+        }
     }
 
-    const getPageName = (pageNum) => {
-        const currentPage = files[pageNum]
-        if (namingTemplate.length < 1) {
-            const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
+    const getPageName = (pageIndex) => {
+        try {
+            const currentPage = files[pageIndex]
+            console.log(currentPage)
+            if (namingTemplate.length < 1) {
+                const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
+                setCurrentPageName(finalName)
+                return
+            }
+            const originalNameAppend = namingTemplate.replaceAll("%og%", currentPage.name)
+            const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
+            const leadingZerosPattern = /%a\d+%/
+            let leadingZerosAppend = fileNumberAppend
+            while (leadingZerosPattern.test(leadingZerosAppend)) {
+                const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
+                const padLength = parseInt(match.substring(2, match.length - 1))
+                const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
+                leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
+            }
+            const finalName = leadingZerosAppend.replace(/\.[\w\d]+$/, "")
             setCurrentPageName(finalName)
-            return
+        } catch (e) {
+            alert("Function getPageName")
+            alert(e)
         }
-        const originalNameAppend = namingTemplate.replaceAll("%og%", currentPage.name)
-        const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
-        const leadingZerosPattern = /%a\d+%/
-        let leadingZerosAppend = fileNumberAppend
-        while (leadingZerosPattern.test(leadingZerosAppend)) {
-            const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
-            const padLength = parseInt(match.substring(2, match.length - 1))
-            const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
-            leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
-        }
-        const finalName = leadingZerosAppend.replace(/\.[\w\d]+$/, "")
-        setCurrentPageName(finalName)
     }
 
-    const getOverwriteCheck = async () => {
-        const currentPage = files[pageNum]
-        const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
-        // when saving files, add the save path to the files array, for easier checking later
-        // Save the whole path, and then just extract the filename from it after when checking
-        console.log(confirm("Do you want to overwrite"))
-        console.log(await fs.getDataFolder())
+    const markPageAsDouble = () => {
+        try {
+            if (currentPageIndex < files.length - 1) {
+                const currentPageA = files[currentPageIndex]
+                const isDoubleCurrent = currentPageA.isDouble.length > 0
+                const updatedPageA =  isDoubleCurrent ? {...currentPageA, isDouble: ""} : {...currentPageA, isDouble: "a"}
+                const currentPageB = files[currentPageIndex + 1]
+                const updatedPageB = isDoubleCurrent ? {...currentPageB, pageNumber: currentPageB.pageNumber + 1, isDouble: ""} : {...currentPageB, pageNumber: currentPageB.pageNumber - 1,  isDouble: "a"}
+                const newFiles = files.map((item)=> {
+                    if (item.id == updatedPageA.id) {
+                        return updatedPageA
+                    } else if (item.id == updatedPageB.id) {
+                        return updatedPageB
+                    } else {
+                        if (isDoubleCurrent) {
+                            return {...item, pageNumber: item.pageNumber + 1}
+                        } else {
+                            return {...item, pageNumber: item.pageNumber - 1}
+                        }
+                    }
+                })
+                setFiles(newFiles)
+                console.log(newFiles)
+                console.log(`Double AB: ${currentPageIndex}:${currentPageIndex + 1}`)
+            } else {
+                alert("There is no page after this")
+            }
+        } catch (e) {
+            alert("Function markPageAsDouble")
+            alert(e)
+        }
     }
 
 
     const saveFile = async () => {
-
-        const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
-        const entry = await exportFolder.createFile(`${currentPageName}.${exportExtension}`, {overwrite: true})
-        const isSaved = await require('photoshop').core.executeAsModal(savePSD.bind(null, entry))
-        if (isSaved) {
-            console.log("Successfully saved")
+        try {
+            const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
+            const entry = await exportFolder.createFile(`${currentPageName}${files[currentPageIndex].isDouble}.${exportExtension}`, {overwrite: true})
+            const isSaved = await require('photoshop').core.executeAsModal(savePSD.bind(null, entry))
+            if (isSaved) {
+                console.log("Successfully saved")
+            }
+        } catch (e) {
+            alert("Function saveFile")
+            alert(e)
         }
     }
 
-    const setNewPageNum = () => {
+    const setNewPageNum = (newPageNum) => {
         // get page number selected.
-        // Update the page number using dispatch
         // get difference of new number to the original. Update all other pages by this amount as well to keep consistency
-
+        try {
+            const wantedPageNum = parseInt(newPageNum)
+            console.log(`Wanted page num: ${wantedPageNum}`)
+            if (wantedPageNum == NaN) {
+                return
+            }
+            const pageNumDifference = wantedPageNum - pageNumber
+            console.log(`Difference to current page number: `)
+            const newFiles = files.map((item) => {
+                if (item.id >= files[currentPageIndex].id) {
+                    return {...item, pageNumber: item.pageNumber + pageNumDifference}
+                } else {
+                    return item
+                }
+            })
+            setPageNumber(pageNumber + pageNumDifference)
+            setFiles(newFiles)
+            getPageName(currentPageIndex)
+            console.log(newFiles)
+            console.log("Updated page numbers on current and further files")
+        } catch (e) {
+            alert("Function setNewPageNum")
+            alert(e)
+        }
     }
 
+    const closeOverwriteDialog = async () => {
+        try {
+            overwriteAlert.close()
+        } catch (e) {
+            alert("Function close guide dialog")
+            alert(e)
+        }
+    }
+
+    const fileExists = async (file) => {
+        try {
+            console.log(file)
+            const entry = await fs.getEntryWithUrl(`${file}.psd`)
+            console.log(entry)
+            await entry.getMetadata()
+            return true
+        } catch(e) {
+            return false
+        }
+    }
+    const overwriteCheck = async () => {
+        try {
+            if (directories.exportDir.length < 1) {
+                alert("No export directory is chosen")
+                return
+            }
+
+            if (!directories.shouldExport) {
+                alert("Enable export")
+                return
+            }
+
+            const currentFile = `${directories.exportDir}\\${currentPageName}`
+            if (await fileExists(currentFile)) {
+                await openOverwriteDialog()
+            } else {
+                await saveFile()
+            }
+        } catch(e) {
+            alert("Function overwriteCheck")
+            alert(e)
+        }
+    }
+    const overwriteFile = async () => {
+        try {
+            await closeOverwriteDialog()
+            await saveFile()
+        } catch(e) {
+            alert("Function overwriteFile")
+            alert(e)
+        }
+    }
+    const openOverwriteDialog = async () => {
+        try {
+            if (!overwriteAlert) {
+                overwriteAlert = document.createElement("dialog")
+                overwriteAlert.style.padding = "1rem"
+
+                const root = createRoot(overwriteAlert)
+                root.render(<OverwriteModal dialog={overwriteAlert} handleClose={closeOverwriteDialog} fileToOverwriteName={currentPageName} overwriteFile={overwriteFile}/>)
+            }
+            document.body.appendChild(overwriteAlert)
+
+            overwriteAlert.onclose = () => {
+                overwriteAlert.remove()
+                overwriteAlert = null
+            }
+
+            await overwriteAlert.uxpShowModal({
+                title: "Overwrite alert",
+            })
+        } catch (e) {
+            alert("Function openOverwriteDialog")
+            alert(e)
+        }
+    }
     const savePSD = async (entry) => {
         console.log("Saving as psd")
         const doc = app.activeDocument
@@ -213,49 +395,33 @@ export const Export = () => {
                 </sp-progressbar>
                 <div id={"files"}>
                     {files.map((file, index) => <FileObject scrollRef={index == currentPageIndex ? scrollRef : undefined} name={file.name} status={file.isDone}
-                                                            active={index == currentPageIndex} key={index}
-                                                            changeStatus={() => changeFileStatus(index)}>{file.name}</FileObject>)}
+                                                            active={index == currentPageIndex} key={index} pageNum={file.pageNumber} goToFunc={goToFile}
+                                                            ></FileObject>)}
                 </div>
             </div>
             <div class={"fit-row-style"}>
-                <sp-action-button style={{width: "20%"}}>{"<"}</sp-action-button>
-                <sp-action-button style={{width: "60%"}}>Complete</sp-action-button>
-                <sp-action-button style={{width: "20%"}}>{">"}</sp-action-button>
+                <sp-action-button style={{width: "20%"}} onClick={() => {goToNextFile(false)}}>{"<"}</sp-action-button>
+                {isStart &&
+                    <sp-action-button style={{width: "60%"}} onClick={() => {openStartingFile()}}>Start</sp-action-button>
+                }
+                {!isStart &&
+                    <sp-action-button style={{width: "60%"}} onClick={() => {changeFileStatus(currentPageIndex)}}>Complete</sp-action-button>
+                }
+                <sp-action-button style={{width: "20%"}} onClick={() => {goToNextFile(true)}}>{">"}</sp-action-button>
             </div>
             <div class={"fit-row-style"}>
-                <sp-action-button style={{width: "50%"}}>Save</sp-action-button>
-                <sp-action-button style={{width: "50%"}}>Double</sp-action-button>
+                <sp-action-button style={{width: "50%"}} onClick={() => {markPageAsDouble()}}>Double</sp-action-button>
+                <sp-action-button style={{width: "50%"}} onClick={() => {overwriteCheck()}}>Save</sp-action-button>
             </div>
         </Section>
-        {/*Information about saving*/}
-        {/*
-        <div id={"export-movement"}>
-            {isStart &&
-                <sp-action-button onClick={() => openStartingFile()}>Start</sp-action-button>
-            }
-            {!isStart &&
-                <div>
-                    <sp-action-button onClick={() => goToNextFile(false)}>{"<"}</sp-action-button>
-                    <sp-action-button>Double Spread</sp-action-button>
-                    <sp-action-button onClick={() => changeFileStatus(currentPageIndex)}>Complete page</sp-action-button>
-                    <sp-action-button onClick={() => goToNextFile(true)}>{">"}</sp-action-button>
-                    <br/>
-                    {directories.shouldExport != null ? (
-                        <sp-action-button onClick={() => console.log("Tried to save")}>Save</sp-action-button>
-                    ) : (
-                        <sp-action-button disabled>Save</sp-action-button>
-                    )}
-                </div>
-            }
-        </div>
-        */}
 
         <Section isTransparent={true} sectionName={"Additional information"}>
-            <sp-textfield class={"button-100"}>
+            <sp-textfield class={"button-100"} id={"page-number-input"}>
                 <sp-label slot={"label"} isrequired={"true"}>Manual page number</sp-label>
             </sp-textfield>
+            <sp-action-button class={"button-100"} onClick={() => {setNewPageNum(document.getElementById("page-number-input").value)}}>Set</sp-action-button>
             <sp-heading size={"XS"}>Current file name</sp-heading>
-            <sp-heading size={"XXS"}>Placeholder filename</sp-heading>
+            <sp-heading size={"XXS"}>{currentPageName}</sp-heading>
         </Section>
 
         <Section isTransparent={true} sectionName={"project"}>
@@ -266,22 +432,5 @@ export const Export = () => {
             <sp-action-button class={"button-100"}>Save</sp-action-button>
         </Section>
 
-        {/*
-        <sp-heading size={"M"}>Additional Information</sp-heading>
-        <div className={"same-line"}>
-        <p className={"input-label same-line-element"}>Manual page number</p>
-        <input type={"number"} name={"page-num same-line-element"} style={{width: "40px"}} onChange={(e) => setInputManualPageNum(e.target.value)}/>
-        <sp-action-button className={"same-line-element"} onClick={() => setNewPageNum()}>Set</sp-action-button>
-        </div>
-        <br/>
-        <p className={"input-label"}>Name for saving</p>
-        <sp-body>{files.length < 1 ? "FileName" : currentPageName}
-            <select name={"extensions"} value={exportExtension} onChange={(e) => setExportExtension(e.target.value)}>
-                <option value={"psd"}>psd</option>
-                <option value={"png"}>png</option>
-                <option value={"jpg"}>jpg</option>
-            </select>
-        </sp-body>
-        */}
     </div>
 }

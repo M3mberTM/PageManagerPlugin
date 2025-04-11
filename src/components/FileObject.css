@@ -3,6 +3,10 @@
     color: #e1e1e1;
 }
 
+.completed-file {
+    background-color: #FF0000;
+}
+
 .inactive-file {
     color: #e1e1e1;
 }
@@ -10,4 +14,8 @@
 .file-checkbox {
     width: 10px;
     height: 10px;
+}
+
+.stupid-icon {
+    transform: scaleX(-1);
 }

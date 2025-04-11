@@ -75,3 +75,8 @@
 .left-pad {
     padding-left: 7px;
 }
+
+.strong-text {
+    font-weight: bolder;
+    font-style: italic;
+}
