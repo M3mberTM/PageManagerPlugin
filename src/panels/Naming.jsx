@@ -161,7 +161,7 @@ export const Naming = () => {
         console.log(filteredPresets)
         await writeToPresetFile(JSON.stringify({presets: filteredPresets}))
         // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
-        document.getElementById("saved-templates").value = ""
+        document.getElementById("saved-templates").selectedIndex = -1
     }
 
     const loadPreset =  (template) => {

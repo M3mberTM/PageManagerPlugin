@@ -5,17 +5,18 @@ import "./Export.css";
 import "../components/CommonStyles.css";
 import {FileObject} from "../components/FileObject";
 import {useSelector} from "react-redux";
-import {useDispatch} from "react-redux";
 import {createRoot} from "react-dom";
 import {OverwriteModal} from "../components/OverwriteModal";
+import {ProjectModal} from "../components/ProjectModal";
+import {useDispatch} from "react-redux";
+import {setFiles} from "../reducers/fileSlice";
 
 const fs = require('uxp').storage.localFileSystem;
 const core = require('photoshop').core
 const app = require("photoshop").app;
 
 export const Export = () => {
-    const [exportExtension, setExportExtension] = useState('psd')
-    const [files, setFiles] = useState([])
+    const [files, setProjectFiles] = useState([])
     const dirFiles = useSelector(state => state.fileSlice.value)
     const namingTemplate = useSelector((state) => state.templateSlice.value)
     const dirs = useSelector((state) => state.folderSlice.value)
@@ -26,8 +27,11 @@ export const Export = () => {
     const [pageNumber, setPageNumber] = useState(0)
     const [isStart, setIsStart] = useState(true)
     const [currentPageName, setCurrentPageName] = useState("")
-    const [showOverwritingAlert, setShowOverWritingAlert] = useState(false)
+    const [presets, setPresets] = useState([])
+    const [projects, setProjects] = useState({})
     let overwriteAlert = null
+    let projectDialog = null
+    const presetFileName = 'projects.txt'
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -35,7 +39,7 @@ export const Export = () => {
         const loadedFiles = [...dirFiles]
         const collator = new Intl.Collator('en', {numeric: true, sensitivity: "base"})
         const sortedFiles = loadedFiles.sort((a, b) => collator.compare(a.name, b.name))
-        setFiles(sortedFiles)
+        setProjectFiles(sortedFiles)
         setCurrentPageIndex(0)
         setPageNumber(0)
         setIsStart(true)
@@ -43,9 +47,16 @@ export const Export = () => {
 
     useEffect(() => {
         if (files.length > 0) {
-            getPageName(currentPageIndex)
+            getPageName(files[currentPageIndex])
         }
     }, [namingTemplate])
+
+    useEffect(async () => {
+        const projectContents = await getPresetFileContents()
+        console.log(projectContents)
+        setProjects(projectContents)
+        setPresets(Object.keys(projectContents))
+    }, [])
 
     useEffect(() => {
         setDirectories(dirs)
@@ -60,10 +71,16 @@ export const Export = () => {
             alert(e)
         }
     }
-    const openFile = async (pageNum) => {
+    const openFile = async (pageIndex) => {
         try {
             const app = window.require("photoshop").app
-            const fileEntry = await fs.getEntryWithUrl(files[pageNum].filename)
+            let fileEntry = null
+            if (files[pageIndex].exportPath.length > 1) {
+                console.log(files[pageIndex].exportPath)
+                fileEntry = await fs.getEntryWithUrl(files[pageIndex].exportPath)
+            } else {
+                fileEntry = await fs.getEntryWithUrl(files[pageIndex].filename)
+            }
             await app.open(fileEntry)
         } catch (e) {
             alert("Function openFile")
@@ -112,7 +129,7 @@ export const Export = () => {
                     console.log(`Page number: ${currentPageNum + 1}`)
                     console.log(`Current page: ${current + 1}`)
                     await openNextFile(current + 1)
-                    getPageName(current + 1)
+                    getPageName(files[current + 1])
                     await core.executeAsModal(() => closeFile(currentDoc))
                 } else {
                     alert("Congratulation, you are done!")
@@ -124,7 +141,7 @@ export const Export = () => {
                     console.log(`Page number: ${currentPageNum - 1}`)
                     console.log(`Current page: ${current + 1}`)
                     await openNextFile(current - 1)
-                    getPageName(current - 1)
+                    getPageName(files[current - 1])
                     await core.executeAsModal(() => closeFile(currentDoc))
                 }
             }
@@ -156,7 +173,7 @@ export const Export = () => {
                     return file
                 }
             })
-            setFiles(newFiles)
+            setProjectFiles(newFiles)
 
             if (newFile.isDone) {
                 setCompletedNum(completedNum + 1)
@@ -174,7 +191,7 @@ export const Export = () => {
             if (files.length > 0) {
                 await openNextFile(0)
                 setIsStart(false)
-                getPageName(0)
+                getPageName(files[0])
             } else {
                 alert("No files were loaded")
             }
@@ -193,9 +210,8 @@ export const Export = () => {
         }
     }
 
-    const getPageName = (pageIndex) => {
+    const getPageName = (currentPage) => {
         try {
-            const currentPage = files[pageIndex]
             console.log(currentPage)
             if (namingTemplate.length < 1) {
                 const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
@@ -213,6 +229,7 @@ export const Export = () => {
                 leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
             }
             const finalName = leadingZerosAppend.replace(/\.[\w\d]+$/, "")
+
             setCurrentPageName(finalName)
         } catch (e) {
             alert("Function getPageName")
@@ -241,7 +258,7 @@ export const Export = () => {
                         }
                     }
                 })
-                setFiles(newFiles)
+                setProjectFiles(newFiles)
                 console.log(newFiles)
                 console.log(`Double AB: ${currentPageIndex}:${currentPageIndex + 1}`)
             } else {
@@ -257,10 +274,21 @@ export const Export = () => {
     const saveFile = async () => {
         try {
             const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
-            const entry = await exportFolder.createFile(`${currentPageName}${files[currentPageIndex].isDouble}.${exportExtension}`, {overwrite: true})
+            const saveName = `${currentPageName}${files[currentPageIndex].isDouble}.psd`
+            const entry = await exportFolder.createFile(saveName, {overwrite: true})
             const isSaved = await require('photoshop').core.executeAsModal(savePSD.bind(null, entry))
             if (isSaved) {
                 console.log("Successfully saved")
+                const ogPage = files[currentPageIndex]
+                const updatedPage = {...ogPage, exportPath: `${directories.exportDir}\\${saveName}`}
+                const newFiles = files.map((item) => {
+                    if (item.id == updatedPage.id) {
+                        return updatedPage
+                    } else {
+                        return item
+                    }
+                })
+                setProjectFiles(newFiles)
             }
         } catch (e) {
             alert("Function saveFile")
@@ -279,16 +307,20 @@ export const Export = () => {
             }
             const pageNumDifference = wantedPageNum - pageNumber
             console.log(`Difference to current page number: `)
+            const ogPage = files[currentPageIndex]
+            const updatedPage = {...ogPage, pageNumber: ogPage.pageNumber + pageNumDifference}
             const newFiles = files.map((item) => {
-                if (item.id >= files[currentPageIndex].id) {
+                if (item.id == updatedPage.id) {
+                    return updatedPage
+                } else if (item.id > updatedPage.id) {
                     return {...item, pageNumber: item.pageNumber + pageNumDifference}
                 } else {
                     return item
                 }
             })
             setPageNumber(pageNumber + pageNumDifference)
-            setFiles(newFiles)
-            getPageName(currentPageIndex)
+            setProjectFiles(newFiles)
+            getPageName(updatedPage)
             console.log(newFiles)
             console.log("Updated page numbers on current and further files")
         } catch (e) {
@@ -301,7 +333,17 @@ export const Export = () => {
         try {
             overwriteAlert.close()
         } catch (e) {
-            alert("Function close guide dialog")
+            alert("Function close overwrite dialog")
+            alert(e)
+        }
+    }
+
+
+    const closeProjectDialog = async () => {
+        try {
+            projectDialog.close()
+        } catch (e) {
+            alert("Function close Project dialog")
             alert(e)
         }
     }
@@ -309,7 +351,7 @@ export const Export = () => {
     const fileExists = async (file) => {
         try {
             console.log(file)
-            const entry = await fs.getEntryWithUrl(`${file}.psd`)
+            const entry = await fs.getEntryWithUrl(`${file}`)
             console.log(entry)
             await entry.getMetadata()
             return true
@@ -329,7 +371,7 @@ export const Export = () => {
                 return
             }
 
-            const currentFile = `${directories.exportDir}\\${currentPageName}`
+            const currentFile = `${directories.exportDir}\\${currentPageName}.psd`
             if (await fileExists(currentFile)) {
                 await openOverwriteDialog()
             } else {
@@ -373,6 +415,33 @@ export const Export = () => {
             alert(e)
         }
     }
+
+
+    const openProjectDialog = async () => {
+        try {
+            if (!projectDialog) {
+                projectDialog = document.createElement("dialog")
+                projectDialog.style.padding = "1rem"
+
+                const root = createRoot(projectDialog)
+                root.render(<ProjectModal dialog={projectDialog} handleClose={closeProjectDialog} files={files} saveProject={saveProject}/>)
+            }
+            document.body.appendChild(projectDialog)
+
+            projectDialog.onclose = () => {
+                projectDialog.remove()
+                projectDialog = null
+            }
+
+            await projectDialog.uxpShowModal({
+                title: "Save Project Preset",
+            })
+        } catch (e) {
+            alert("Function openOverwriteDialog")
+            alert(e)
+        }
+    }
+
     const savePSD = async (entry) => {
         console.log("Saving as psd")
         const doc = app.activeDocument
@@ -385,6 +454,91 @@ export const Export = () => {
         }
     }
 
+    const getPresetFileContents = async () => {
+        try {
+            const dataFolder = await fs.getDataFolder()
+            console.log(dataFolder.nativePath)
+            if (await fileExists(`${dataFolder.nativePath}\\${presetFileName}`)) {
+                console.log("File exists already")
+                const presetFile = await dataFolder.getEntry(presetFileName)
+                const fileContent = await presetFile.read()
+                console.log(JSON.parse(fileContent))
+                return JSON.parse(fileContent)
+            } else {
+                console.log("File does not exist yet")
+                const presetFile = await dataFolder.createFile(presetFileName)
+                const initialContent = {}
+                presetFile.write(JSON.stringify(initialContent))
+                return initialContent
+            }
+        } catch (e) {
+            alert("Function load preset")
+            alert(e)
+        }
+    }
+    const writeToPresetFile = async (content) => {
+        try {
+            const dataFolder = await fs.getDataFolder()
+            const file = await dataFolder.getEntry(presetFileName)
+            await file.write(content)
+            console.log('Successfully written new preset')
+        } catch (e) {
+            alert("Function add to preset file")
+            alert(e)
+        }
+    }
+
+    const removeProject = async (inputVal) => {
+        try {
+            const newProjects = {}
+            for (let i = 0; i < presets.length; i++) {
+                if (presets[i] != inputVal) {
+                    newProjects[presets[i]] = projects[presets[i]]
+                }
+            }
+            const newPresets = presets.filter((item)=> {
+                return item != inputVal
+            })
+            setProjects(newProjects)
+            setPresets(newPresets)
+
+            console.log("Setting value back")
+            document.getElementById("saved-projects").selectedIndex = -1
+        } catch(e) {
+            alert("Function remove Project")
+            alert(e)
+        }
+    }
+
+    const saveProject = async (inputVal) => {
+        try {
+
+            const newProjects = await getPresetFileContents()
+            newProjects[inputVal] = files
+            setPresets(Object.keys(newProjects))
+            setProjects(newProjects)
+            console.log(newProjects)
+            await writeToPresetFile(JSON.stringify(newProjects))
+            await closeProjectDialog()
+        } catch (e) {
+            alert("Function save Project")
+            alert(e)
+        }
+    }
+
+    const loadProject = async (projectName) => {
+        try {
+            console.log("Before presetLoading")
+            const projectContents = await getPresetFileContents()
+            console.log("Before selecting projct")
+            const selectedProject = projectContents[projectName]
+            setProjectFiles(selectedProject)
+            dispatch(setFiles(selectedProject))
+        } catch(e) {
+            alert("Function loadProject")
+            alert(e)
+        }
+    }
 
     return <div id={"export"}>
         {/*File showcase*/}
@@ -425,11 +579,18 @@ export const Export = () => {
         </Section>
 
         <Section isTransparent={true} sectionName={"project"}>
+            <sp-dropdown class={"button-100"} placeholder={"Choose a selection..."}>
+                <sp-menu slot={"options"} id={"saved-projects"}>
+                    {presets.map((item, index) => {
+                        return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
+                    })}
+                </sp-menu>
+            </sp-dropdown>
             <div class={"fit-row-style heading-style"}>
-                <sp-action-button style={{width: "50%"}}>Load</sp-action-button>
-                <sp-action-button style={{width: "50%"}}>Remove</sp-action-button>
+                <sp-action-button style={{width: "50%"}} onClick={() => {removeProject(document.getElementById("saved-projects").value)}}>Remove</sp-action-button>
+                <sp-action-button style={{width: "50%"}} onClick={() => loadProject(document.getElementById("saved-projects").value)}>Load</sp-action-button>
             </div>
-            <sp-action-button class={"button-100"}>Save</sp-action-button>
+            <sp-action-button class={"button-100"} onClick={() => {openProjectDialog()}}>Save</sp-action-button>
         </Section>
 
     </div>

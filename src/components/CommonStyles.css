@@ -80,3 +80,12 @@
     font-weight: bolder;
     font-style: italic;
 }
+
+.files {
+    height: 100px;
+    background-color: #303030;
+    color: #e1e1e1;
+    font-size: 12px;
+    text-wrap-style: nowrap;
+    overflow-y: scroll;
+}
