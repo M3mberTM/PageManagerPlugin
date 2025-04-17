@@ -7,6 +7,7 @@ import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch} from "react-redux";
 import {createRoot} from "react-dom";
 import {GuideModal} from "../components/GuideModal";
+import {clearLog} from "../components/Logger";
 
 const fs = require('uxp').storage.localFileSystem;
 
@@ -22,8 +23,10 @@ export const Naming = () => {
     useEffect(async () => {
         // load the preset file saved before starting anything
         const presetContents = await getPresetFileContents()
+        await clearLog()
         console.log(presetContents.presets)
         setPresets(presetContents.presets)
+
     }, [])
 
     const addLeadingZeros = (num, size) => {

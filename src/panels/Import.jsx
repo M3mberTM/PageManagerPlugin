@@ -7,6 +7,7 @@ import {setFiles} from "../reducers/fileSlice"
 import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {ConvertModal} from "../components/ConvertModal";
+import {logToFile} from "../components/Logger";
 
 const storage = require("uxp").storage
 const fs = storage.localFileSystem;
@@ -23,6 +24,7 @@ export const Import = () => {
     const dispatch = useDispatch()
     let convertDialog = null;
 
+
     useEffect(() => {
         setDirectories(dirs)
     }, [dirs])
@@ -34,8 +36,9 @@ export const Import = () => {
         }
     }, [importPath])
 
-    const getTruncatedString = (maxLength, text) => {
+    const getTruncatedString = async (maxLength, text) => {
         try {
+            await logToFile(`getTruncatedString(${maxLength}, ${text})`, false)
             const actualLength = maxLength - 3
             const textLength = text.length
             console.log(textLength)
@@ -45,21 +48,24 @@ export const Import = () => {
                 return "..." + text
             }
         } catch (e) {
+            await logToFile(`getTruncatedString(${maxLength}, ${text});${e}`, true)
             alert("Function Truncated string")
             alert(e)
         }
     }
     const getFolder = async (setter) => {
         try {
-        console.log("Getting folder")
-        const folder = await fs.getFolder();
-        if (folder == null) {
-            return
-        }
-        console.log(`Path to folder: ${fs.getNativePath(folder)}`)
-        setter(getTruncatedString(40, folder.nativePath))
-        return folder
+            await logToFile(`getFolder(${setter})`, false)
+            console.log("Getting folder")
+            const folder = await fs.getFolder();
+            if (folder == null) {
+                return
+            }
+            console.log(`Path to folder: ${fs.getNativePath(folder)}`)
+            setter(await getTruncatedString(40, folder.nativePath))
+            return folder
         } catch(e) {
+            await logToFile(`getFolder(${setter});${e}`, true)
             alert("Function get folder")
             alert(e)
         }
@@ -67,14 +73,15 @@ export const Import = () => {
 
     const getFiles = async (setter) => {
         try {
+            await logToFile(`getFiles(${setter})`, false)
             console.log("Getting files")
-            const files = await fs.getFileForOpening({allowMultiple: true, types: storage.fileTypes.images.concat(["jpeg"])})
+            const files = await fs.getFileForOpening({allowMultiple: true, types: storage.fileTypes.images.concat(["jpeg", "psd", "psb"])})
             if (files.length < 1) {
                 return
             }
             const filePath = files[0].nativePath
             const folder= filePath.substring(0,filePath.lastIndexOf("\\"))
-            setter(getTruncatedString(40, folder))
+            setter(await getTruncatedString(40, folder))
             dispatch(setImportFolder(folder))
             if (directories.exportDir.length < 1) {
                 dispatch(setExportFolder(folder))
@@ -82,6 +89,7 @@ export const Import = () => {
             setFullExportPath(folder)
             return files
         } catch(e) {
+            await logToFile(`getFiles(${setter});${e}`, true)
             alert("Function get files")
             alert(e)
         }
@@ -89,6 +97,7 @@ export const Import = () => {
 
     const getImportFiles = async (setter) => {
         try {
+            await logToFile(`getImportFiles(${setter})`, false)
             console.log("Import folder")
             const files = await getFiles(setter)
 
@@ -103,6 +112,7 @@ export const Import = () => {
                 return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", isDouble: "", pageNumber: index, id:index}
             })))
         } catch(e) {
+            await logToFile(`getImportFiles(${setter});${e}`, true)
             alert("Function get Import folder")
             alert(e)
         }
@@ -110,6 +120,7 @@ export const Import = () => {
 
     const getExportFolder = async (setter) => {
         try {
+            await logToFile(`getExportFolder(${setter})`, false)
             console.log("Export folder")
             const folder = await getFolder(setter)
 
@@ -119,18 +130,21 @@ export const Import = () => {
 
             dispatch(setExportFolder(folder.nativePath))
         } catch(e) {
+            await logToFile(`getExportFolder(${setter});${e}`, true)
             alert("Function get export folder")
             alert(e)
         }
     }
 
-    const handleExportCheck = () => {
+    const handleExportCheck = async () => {
         try {
+            await logToFile(`handleExportCheck()`, false)
             const newExportChecked = !isExportChecked;
             setIsExportChecked(newExportChecked)
             console.log(`Export switched to: ${newExportChecked}`)
             dispatch(setShouldExport(newExportChecked))
         } catch (e) {
+            await logToFile(`handleExportCheck();${e}`, true)
             alert("Function handle Export check")
             alert(e)
         }
@@ -140,6 +154,7 @@ export const Import = () => {
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
         try {
+            await logToFile(`convertFiles(${extension}, ${folder})`, false)
             if (folder.length < 1 ) {
                 alert("No folder selected")
                 return
@@ -163,14 +178,17 @@ export const Import = () => {
                 await closeCurrentFile()
             }
         } catch (e) {
+            await logToFile(`convertFiles(${extension}, ${folder});${e}`, true)
             alert("Function convert files")
             alert(e)
         }
     }
     const closeConvertDialog = async () => {
         try {
+            await logToFile(`closeConvertDialog()`, false)
             convertDialog.close()
         } catch(e) {
+            await logToFile(`closeConvertDialog();${e}`, true)
             alert("Function close convert dialog")
             alert(e)
         }
@@ -178,6 +196,7 @@ export const Import = () => {
 
     const openConvertDialog = async () => {
         try {
+            await logToFile(`openConvertDialog()`, false)
             if (!convertDialog) {
                 convertDialog = document.createElement("dialog")
                 convertDialog.style.padding = "1rem"
@@ -196,6 +215,7 @@ export const Import = () => {
                 title: "Convert project",
             })
         } catch(e) {
+            await logToFile(`openConvertDialog();${e}`, true)
             alert("Function open convert dialog")
             alert(e)
         }
@@ -203,8 +223,10 @@ export const Import = () => {
 
     const openFile = async (entry) => {
         try {
+            await logToFile(`openFile(${entry})`, false)
             await core.executeAsModal(async () => {await app.open(entry)})
         } catch(e) {
+            await logToFile(`openFile(${entry});${e}`, true)
             alert("function open file")
             alert(e)
         }
@@ -212,6 +234,7 @@ export const Import = () => {
 
     const exportFile = async (extension, folder) => {
         try {
+            await logToFile(`exportFile(${extension}, ${folder})`, false)
             switch (extension) {
                 case "png":
                     // Export into png function
@@ -228,6 +251,7 @@ export const Import = () => {
                     break
             }
         } catch(e) {
+            await logToFile(`exportFile(${extension}, ${folder});${e}`, true)
             alert("Function export file")
             alert(e)
         }
@@ -237,6 +261,7 @@ export const Import = () => {
         // put png options here
 
         try {
+            await logToFile(`savePng(${folder})`, false)
             const doc = app.activeDocument
             console.log(doc)
             const fileName = doc.name.replace(/\.\w+$/, "")
@@ -244,6 +269,7 @@ export const Import = () => {
             console.log(entry)
             await core.executeAsModal(async () => {await doc.saveAs.png(entry)})
         } catch (e) {
+            await logToFile(`savePng(${folder});${e}`, true)
             alert("Function save png")
             alert(e)
         }
@@ -253,6 +279,7 @@ export const Import = () => {
         // put jpg options here
         const jpgOptions = {quality: 12}
         try {
+            await logToFile(`saveJpg(${folder})`, false)
             const doc = app.activeDocument
             console.log("CURRENT DOC")
             console.log(doc)
@@ -261,6 +288,7 @@ export const Import = () => {
             console.log(entry)
             await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
         } catch (e) {
+            await logToFile(`saveJpg(${folder});${e}`, true)
             alert("Function save jpg")
             alert(e)
         }
@@ -268,22 +296,29 @@ export const Import = () => {
 
     const closeCurrentFile = async () => {
         try {
+            await logToFile(`closeCurrentFile()`, false)
             const doc = app.activeDocument
             console.log(doc)
             await core.executeAsModal(async () => {await doc.close()})
 
         } catch (e) {
+            await logToFile(`closeCurrentFile();${e}`, true)
             alert("Function close current file")
             alert(e)
         }
     }
 
-    const getPathValue = (currentPath) => {
+    const getPathValue =  (currentPath) => {
        // Returns a placeholder value for folders if the current path is empty
-        if (currentPath.length < 1) {
-            return "Path to folder"
-        } else {
-            return currentPath
+        try {
+            if (currentPath.length < 1) {
+                return "Path to folder"
+            } else {
+                return currentPath
+            }
+        } catch (e) {
+            alert("Function getPathValue")
+            alert(e)
         }
     }
 
