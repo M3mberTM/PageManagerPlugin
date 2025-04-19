@@ -4,49 +4,44 @@ import "./styles.css";
 import {PanelController} from "./controllers/PanelController.jsx";
 import {CommandController} from "./controllers/CommandController.jsx";
 import {About} from "./components/About.jsx";
-import {PanelSelector} from "./components/PanelSelector";
 import {entrypoints} from "uxp";
-
+import {Import} from "./panels/Import";
+import {Naming} from "./panels/Naming";
+import {Export} from "./panels/Export";
 import {Provider} from "react-redux";
 import store from "./reducers/store";
 
-const panels = {
-    "Import": 0,
-    "Naming": 1,
-    "Export": 2
-}
 const aboutController = new CommandController(({dialog}) => <About dialog={dialog}/>, {
     id: "showAbout",
-    title: "React Starter Plugin Demo",
+    title: "PageOpeningPlugin Info",
     size: {width: 480, height: 480}
 });
-// const demosController =  new PanelController(() => <Demos/>, {id: "demos", menuItems: [
-//     { id: "reload1", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload() },
-//     { id: "dialog1", label: "About this Plugin", enabled: true, checked: false, oninvoke: () => aboutController.run() },
-// ] });
-// const moreDemosController =  new PanelController(() => <MoreDemos/>, { id: "moreDemos", menuItems: [
-//     { id: "reload2", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload() }
-// ] });
 
-const importController = new PanelController(() => <Provider store={store}><PanelSelector
-    panel={panels["Import"]}/></Provider>, {
+const importController = new PanelController(() => <Provider store={store}><Import/></Provider>, {
     id: "import", menuItems: [
-        {id: "reload4", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
+        {id: "reload4", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}, {
+            id: "dialog",
+            label: "About",
+            enabled: true,
+            checked: false,
+            oninvoke: () => aboutController.run()
+        }]
 })
 
-const namingController = new PanelController(() => <Provider store={store}><PanelSelector
-    panel={panels["Naming"]}/></Provider>, {
+const namingController = new PanelController(() => <Provider store={store}><Naming/></Provider>, {
     id: "naming", menuItems: [
         {id: "reload5", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
 })
 
-const exportController = new PanelController(() => <Provider store={store}><PanelSelector
-    panel={panels['Export']}/></Provider>, {
+const exportController = new PanelController(() => <Provider store={store}><Export/></Provider>, {
     id: "export", menuItems: [
         {id: "reload6", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
 })
 
 entrypoints.setup({
+    commands: {
+        showAbout: aboutController
+    },
     panels: {
         import: importController,
         naming: namingController,

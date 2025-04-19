@@ -3,34 +3,35 @@ import React from "react";
 import { versions } from "uxp";
 import os from "os";
 
-import "./About.css";
+import "./CommonStyles.css"
 
-export const About = (props) => {
+export const About = ({dialog}) => {
     return (
-        <form method="dialog" className="aboutDialog">
-        <sp-heading>React Starter Plugin</sp-heading>
-        <sp-divider size="large"></sp-divider>
-        <sp-body>
-            This is a simple plugin that demonstrates the various capabilities of React on UXP.
-            When adapting to your own projects, you can replace <code>index.jsx</code> and the components
-            with your own. 
-        </sp-body>
-        <webview id="webview" width="100%" height="360px" src="https://www.google.com"></webview>
-        <sp-body class="well">
-            <sp-icon name="ui:InfoSmall" size="s"></sp-icon>
-            We've also included the `WC` component and a couple of controllers. You
-            do not need to use these in your own projects, but you are welcome to do so.
-        </sp-body>
-        <sp-detail>VERSIONS</sp-detail>
-        <div className="table">
-            <div><sp-detail>PLUGIN: </sp-detail><sp-body> {versions.plugin}</sp-body></div>
-            <div><sp-detail>OPERATING SYSTEM:</sp-detail><sp-body> {os.platform()} {os.release()}</sp-body></div>
-            <div><sp-detail>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body>{versions.uxp}</sp-body></div>
+        <div>
+            <sp-heading>PageOpeningPlugin Information</sp-heading>
+            <sp-divider size="large"></sp-divider>
+            <sp-body>
+                Greetings,
+                I am M3mber, creator of this plugin. This plugin was made for the main purpose of using it in scanlation to improve the speed and organization
+                of working for any individual. I am sure the plugin might seem very daunting at first, however it should be simple to learn. If you want more
+                information about the plugin, how to use it, next updates and other, check my github: <sp-link href={"https://github.com/M3mberTM/ReactPagePlugin"}>Repository</sp-link>
+            </sp-body>
+            <sp-body>
+                In case of an error in the plugin, it is recommended to notify me, the creator so I can fix the issue in the next version of the plugin. You can
+                do this in a number of ways. First, if you have a github account, you can make an Issue underneath my repository for this plugin. If you don't,
+                don't fret, you can also contact me on discord:
+                m3mber
+            </sp-body>
+            <sp-detail>PLUGIN DETAILS</sp-detail>
+            <div class={"fit-row-style unimportant-button"}>
+                <div class={"row-highlight-style"}><sp-detail>PLUGIN: </sp-detail><sp-body>Beta {versions.plugin}</sp-body></div>
+                <div class={"row-highlight-style"}><sp-detail>OPERATING SYSTEM:</sp-detail><sp-body> {os.platform()} {os.release()}</sp-body></div>
+                <div class={"row-highlight-style"}><sp-detail>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body>{versions.uxp}</sp-body></div>
+            </div>
+            <sp-button-group style={{marginTop: "10px"}}>
+                <sp-button tabindex={0} variant="secondary" quiet="quiet" onClick={() => dialog.close("reasonCanceled")}>Cancel</sp-button>
+                <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close("ok")}>OK</sp-button>
+            </sp-button-group>
         </div>
-        <sp-button-group>
-            <sp-button tabindex={0} variant="secondary" quiet="quiet" onClick={() => props.dialog.close("reasonCanceled")}>Cancel</sp-button>
-            <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => props.dialog.close("ok")}>OK</sp-button>
-        </sp-button-group>
-    </form>
     );
 }

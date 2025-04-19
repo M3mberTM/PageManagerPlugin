@@ -1,5 +1,5 @@
 import React from 'react';
-import "./FileObject.css"
+import "./CommonStyles.css"
 
 export const FileObject = ({name,pageNum, active, scrollRef, status, goToFunc}) => {
 

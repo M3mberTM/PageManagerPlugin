@@ -56,11 +56,19 @@ export const logToFile = async (content, isError) => {
         const currentDate = new Date()
         let newContent = ""
         if (!finalEntry.includes(initialMsg)) {
-            const dateStamp = finalEntry.substring(0, finalEntry.indexOf(";"))
-            console.log(currentDate.toString())
+            let entry = ""
+            const pattern = /^\w{4}-\w{1,2}-\w{1,2}/
+            for (let i =0; i < lastEntries.length; i++) {
+                let currEntry = lastEntries[lastEntries.length-1-i]
+                console.log(currEntry)
+                if (pattern.exec(currEntry.trim()) != null) {
+                    entry = currEntry
+                    console.log('Found the entry')
+                    break
+                }
+            }
+            const dateStamp = entry.substring(0, entry.indexOf(";"))
             const lastDate = new Date(dateStamp)
-            console.log(dateStamp)
-            console.log(lastDate.toString())
             if (currentDate.getMonth() != lastDate.getMonth() && currentDate.getDate() != lastDate.getDate()) {
                 newContent = splitter
             } else {

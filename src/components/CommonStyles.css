@@ -1,3 +1,8 @@
+:root {
+    --highlight-color: #095aba;
+    --secondary-highlight-color: #117cf5;
+}
+
 .button-100 {
     width: 100%;
 }
@@ -17,12 +22,8 @@
     border-radius: 10px;
 }
 
-.highlight-button {
-    background-color: #b99813;
-}
-
 .unimportant-button {
-    background-color: #5b78a2;
+    background-color: var(--highlight-color);
 }
 
 .right-div-align {
@@ -49,6 +50,19 @@
     background-color: #6e6e6e;
 }
 
+.row-highlight-style {
+    display: flex;
+    width: 100%;
+    marginBottom: 0;
+    flex-wrap: wrap;
+    background-color: var(--highlight-color);
+}
+
+
+.row-highlight-style:nth-child(even) {
+    background-color: var(--secondary-highlight-color);
+}
+
 .row-header-style {
     display: flex;
     width: 100%;
@@ -64,6 +78,7 @@
 .text-center {
     text-align: center;
 }
+
 .width-50 {
     width: 50%;
 }
@@ -87,5 +102,28 @@
     color: #e1e1e1;
     font-size: 12px;
     text-wrap-style: nowrap;
+    text-overflow: clip;
     overflow-y: scroll;
+}
+
+.active-file {
+    background-color: var(--highlight-color);
+    color: #e1e1e1;
+}
+
+.completed-file {
+    background-color: #676767;
+}
+
+.inactive-file {
+    color: #e1e1e1;
+}
+
+.file-checkbox {
+    width: 10px;
+    height: 10px;
+}
+
+.stupid-icon {
+    transform: scaleX(-1);
 }

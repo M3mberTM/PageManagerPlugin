@@ -7,7 +7,7 @@ import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch} from "react-redux";
 import {createRoot} from "react-dom";
 import {GuideModal} from "../components/GuideModal";
-import {clearLog} from "../components/Logger";
+import {clearLog, logToFile} from "../components/Logger";
 
 const fs = require('uxp').storage.localFileSystem;
 
@@ -29,20 +29,22 @@ export const Naming = () => {
 
     }, [])
 
-    const addLeadingZeros = (num, size) => {
+    const addLeadingZeros = async (num, size) => {
         try {
+            await logToFile(`addLeadingZeros(${num},${size})`, false)
             num = num.toString();
             while (num.length < size) num = "0" + num;
             return num;
         } catch (e) {
+            await logToFile(`addLeadingZeros(${num},${size});${e}`, true)
             alert("Function add leading zeros")
             alert(e)
         }
     }
 
-    const applyTemplate = (inputName) => {
-        console.log(inputName);
+    const applyTemplate = async (inputName) => {
         try {
+            await logToFile(`applyTemplate(${inputName})`, false)
             if (inputName.length < 1) {
                 alert("Template is empty")
                 return
@@ -54,13 +56,14 @@ export const Naming = () => {
             while (leadingZerosPattern.test(leadingZerosAppend)) {
                 const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
                 const padLength = parseInt(match.substring(2, match.length - 1))
-                const paddedNum = addLeadingZeros(exampleFileNumber, padLength)
+                const paddedNum = await addLeadingZeros(exampleFileNumber, padLength)
                 leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
             }
 
             setShownName(leadingZerosAppend)
             dispatch(setTemplate(inputName)) // sets to global variable
         } catch (e) {
+            await logToFile(`applyTemplate(${inputName});${e}`, true)
             alert("Function handle Input change")
             alert(e)
         }
@@ -68,8 +71,10 @@ export const Naming = () => {
 
     const closeGuideDialog = async () => {
         try {
+            await logToFile(`closeGuideDialog()`, false)
             guideDialog.close()
         } catch (e) {
+            await logToFile(`closeGuideDialog();${e}`, true)
             alert("Function close guide dialog")
             alert(e)
         }
@@ -77,6 +82,7 @@ export const Naming = () => {
 
     const openGuideDialog = async () => {
         try {
+            await logToFile(`openGuideDialog()`, false)
             if (!guideDialog) {
                 guideDialog = document.createElement("dialog")
                 guideDialog.style.padding = "1rem"
@@ -95,6 +101,7 @@ export const Naming = () => {
                 title: "Template guide",
             })
         } catch (e) {
+            await logToFile(`openGuideDialog();${e}`, true)
             alert("Function open guide dialog")
             alert(e)
         }
@@ -102,6 +109,7 @@ export const Naming = () => {
 
     const getPresetFileContents = async () => {
         try {
+            await logToFile(`getPresetFileContents()`, false)
             const dataFolder = await fs.getDataFolder()
             console.log(dataFolder.nativePath)
             if (await doesFileExits(presetFileName)) {
@@ -116,6 +124,7 @@ export const Naming = () => {
                 return initialContent
             }
         } catch (e) {
+            await logToFile(`getPresetFileContents();${e}`, true)
             alert("Function load preset")
             alert(e)
         }
@@ -123,6 +132,7 @@ export const Naming = () => {
 
     const doesFileExits = async (fileName) => {
         try {
+            await logToFile(`doesFileExists(${fileName})`, false)
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(fileName)
             return true
@@ -133,12 +143,18 @@ export const Naming = () => {
 
     const savePreset = async () => {
         try {
+            await logToFile(`savePreset()`, false)
             const inputVal = document.getElementById("template-input").value
+            if (inputVal.length < 1) {
+                alert("No preset was inputted")
+                return
+            }
             const newPresets = presets.concat(inputVal)
             setPresets(newPresets)
             console.log(newPresets)
             await writeToPresetFile(JSON.stringify({presets: newPresets}))
         } catch (e) {
+            await logToFile(`savePreset();${e}`, true)
             alert("Function save preset")
             alert(e)
         }
@@ -146,35 +162,51 @@ export const Naming = () => {
 
     const writeToPresetFile = async (content) => {
         try {
+            await logToFile(`writeToPresetFile(${content})`, false)
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(presetFileName)
             await file.write(content)
             console.log('Successfully written new preset')
         } catch (e) {
+            await logToFile(`writeToPresetFile(${content});${e}`, true)
             alert("Function add to preset file")
             alert(e)
         }
     }
 
     const deletePreset = async (template) => {
-        const filteredPresets = presets.filter((item) => {
-            return item != template
-        })
-        setPresets(filteredPresets)
-        console.log(filteredPresets)
-        await writeToPresetFile(JSON.stringify({presets: filteredPresets}))
-        // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
-        document.getElementById("saved-templates").selectedIndex = -1
+        try {
+            await logToFile(`deletePreset(${template})`, false)
+            const filteredPresets = presets.filter((item) => {
+                return item != template
+            })
+            setPresets(filteredPresets)
+            console.log(filteredPresets)
+            await writeToPresetFile(JSON.stringify({presets: filteredPresets}))
+            // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
+            document.getElementById("saved-templates").selectedIndex = -1
+        } catch(e) {
+            await logToFile(`deletePreset(${template});${e}`, true)
+            alert("Function deletePreset")
+            alert(e)
+        }
     }
 
-    const loadPreset =  (template) => {
-        if (template == undefined || template == null) {
-            return
+    const loadPreset =  async (template) => {
+        try {
+            await logToFile(`loadPreset(${template})`, false)
+            if (template == undefined || template == null) {
+                return
+            }
+            if (template.length < 1) {
+                return
+            }
+            await applyTemplate(template)
+        } catch (e) {
+            await logToFile(`loadPreset(${template});${e}`, true)
+            alert("Function loadPreset")
+            alert(e)
         }
-        if (template.length < 1) {
-            return
-        }
-        applyTemplate(template)
     }
 
     return <div id={"naming"}>
@@ -186,8 +218,8 @@ export const Naming = () => {
                 applyTemplate(document.getElementById("template-input").value)
             }}>Apply
             </sp-action-button>
-            <sp-action-button class={"button-100 unimportant-button"} onClick={savePreset}>Save preset</sp-action-button>
-            <sp-action-button class={"button-100 highlight-button"} onClick={openGuideDialog}>Guide</sp-action-button>
+            <sp-action-button class={"button-100"} onClick={savePreset}>Save preset</sp-action-button>
+            <sp-action-button class={"button-100 unimportant-button"} onClick={openGuideDialog}>Guide</sp-action-button>
         </Section>
 
         <Section isTransparent={true} sectionName={"Presets"}>

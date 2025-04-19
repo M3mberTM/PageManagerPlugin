@@ -37,6 +37,13 @@
   },
   "entrypoints": [
     {
+      "type": "command",
+      "id": "showAbout",
+      "label": {
+        "default": "Plugin info"
+      }
+    },
+    {
       "type": "panel",
       "id": "import",
       "label": {
@@ -44,7 +51,7 @@
       },
       "minimumSize": {
         "width": 245,
-        "height": 200
+        "height": 320
       },
       "maximumSize": {
         "width": 2000,
@@ -52,11 +59,11 @@
       },
       "preferredDockedSize": {
         "width": 250,
-        "height": 300
+        "height": 350
       },
       "preferredFloatingSize": {
         "width": 250,
-        "height": 300
+        "height": 350
       },
       "icons": [
         {
@@ -101,20 +108,20 @@
         "default": "Naming"
       },
       "minimumSize": {
-        "width": 230,
-        "height": 200
+        "width": 245,
+        "height": 350
       },
       "maximumSize": {
         "width": 2000,
         "height": 2000
       },
       "preferredDockedSize": {
-        "width": 230,
-        "height": 300
+        "width": 250,
+        "height": 350
       },
       "preferredFloatingSize": {
-        "width": 230,
-        "height": 300
+        "width": 250,
+        "height": 350
       },
       "icons": [
         {
@@ -133,7 +140,6 @@
             "generic"
           ]
         },
-
         {
           "width": 32,
           "height": 32,
@@ -159,8 +165,8 @@
         "default": "Movement"
       },
       "minimumSize": {
-        "width": 230,
-        "height": 200
+        "width": 200,
+        "height": 570
       },
       "maximumSize": {
         "width": 2000,
@@ -168,11 +174,11 @@
       },
       "preferredDockedSize": {
         "width": 230,
-        "height": 300
+        "height": 550
       },
       "preferredFloatingSize": {
         "width": 230,
-        "height": 300
+        "height": 550
       },
       "icons": [
         {
@@ -191,7 +197,6 @@
             "generic"
           ]
         },
-
         {
           "width": 32,
           "height": 32,

@@ -18,9 +18,9 @@ export const Import = () => {
     const [importPath, setImportPath] = useState("")
     const [exportPath, setExportPath] = useState("")
     const [isExportChecked, setIsExportChecked] = useState(true)
-    const [fullExportPath, setFullExportPath] = useState("")
     const [directories, setDirectories] = useState({})
     const dirs = useSelector((state) => state.folderSlice.value)
+    const dirFiles = useSelector(state => state.fileSlice.value)
     const dispatch = useDispatch()
     let convertDialog = null;
 
@@ -86,7 +86,6 @@ export const Import = () => {
             if (directories.exportDir.length < 1) {
                 dispatch(setExportFolder(folder))
             }
-            setFullExportPath(folder)
             return files
         } catch(e) {
             await logToFile(`getFiles(${setter});${e}`, true)
@@ -109,7 +108,7 @@ export const Import = () => {
                 return entry.isFile && entryName.substring(entryName.length-3) != "ini"
             })
             dispatch(setFiles(allFiles.map((file, index) => {
-                return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", isDouble: "", pageNumber: index, id:index}
+                return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
             })))
         } catch(e) {
             await logToFile(`getImportFiles(${setter});${e}`, true)
@@ -150,6 +149,12 @@ export const Import = () => {
         }
     }
 
+    const getAllEntries = (entriesUrl) => {
+        const promises = entriesUrl.map(async (item) => {
+            return await fs.getEntryWithUrl(item)
+        })
+        return Promise.all(promises)
+    }
     const convertFiles = async (extension, folder) => {
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
@@ -165,12 +170,17 @@ export const Import = () => {
             }
             await closeConvertDialog()
             const folderEntry = await fs.getEntryWithUrl(folder)
-            const importFolderEntry = await fs.getEntryWithUrl(fullExportPath)
-            const entries = await importFolderEntry.getEntries()
+            const filenames = dirFiles.map((item)=> {
+                return item.filename
+            })
+            const entries = await getAllEntries(filenames)
             const filteredEntries = entries.filter((file) => {
                 return file.isFile && file.name.substring(file.name.length -3) != "ini"
             })
-
+            if (filteredEntries.length < 1) {
+                alert("No Files were selected")
+                return
+            }
             // Main conversion functionality (opening, saving, closing)
             for (let i = 0; i < filteredEntries.length; i++) {
                 await openFile(filteredEntries[i])
@@ -337,7 +347,7 @@ export const Import = () => {
                     <sp-body size={"S"}>{isExportChecked ? getPathValue(exportPath) : "Disabled"}</sp-body>
                     <div class={"fit-row-style"}>
                         {isExportChecked ?
-                            <sp-action-button  class={"width-50"} onClick={handleExportCheck}>Disable</sp-action-button>
+                            <sp-action-button class={"width-50"} onClick={handleExportCheck}>Disable</sp-action-button>
                             :
                             <sp-action-button class={"unimportant-button"} style={{width: "50%"}} onClick={handleExportCheck}>Enable</sp-action-button>
                         }
@@ -347,7 +357,7 @@ export const Import = () => {
             </div>
         </Section>
                 <div id={"export-other"} style={{marginTop: "10px"}}>
-                    <sp-action-button class={"button-100 highlight-button"} onClick={openConvertDialog}>Convert</sp-action-button>
+                    <sp-action-button class={"button-100 unimportant-button"} onClick={openConvertDialog}>Convert</sp-action-button>
                 </div>
     </div>
 }
