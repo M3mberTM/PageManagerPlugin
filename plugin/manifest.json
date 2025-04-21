@@ -1,6 +1,6 @@
 {
-  "id": "PageOpeningPlugin",
-  "name": "Page opening plugin",
+  "id": "PageManagerPlugin",
+  "name": "Page manager",
   "version": "1.0.0",
   "main": "index.html",
   "manifestVersion": 5,
