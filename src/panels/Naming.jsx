@@ -22,11 +22,13 @@ export const Naming = () => {
 
     useEffect(async () => {
         // load the preset file saved before starting anything
-        const presetContents = await getPresetFileContents()
-        await clearLog()
-        console.log(presetContents.presets)
-        setPresets(presetContents.presets)
-
+        const effectPresetContents = async () => {
+            const presetContents = await getPresetFileContents()
+            await clearLog()
+            console.log(presetContents.presets)
+            setPresets(presetContents.presets)
+        }
+        effectPresetContents()
     }, [])
 
     const addLeadingZeros = async (num, size) => {
@@ -111,11 +113,9 @@ export const Naming = () => {
         try {
             await logToFile(`getPresetFileContents()`, false)
             const dataFolder = await fs.getDataFolder()
-            console.log(dataFolder.nativePath)
-            if (await doesFileExits(presetFileName)) {
+            if (await doesPresetFileExist(presetFileName)) {
                 const presetFile = await dataFolder.getEntry(presetFileName)
                 const fileContent = await presetFile.read()
-                console.log(JSON.parse(fileContent))
                 return JSON.parse(fileContent)
             } else {
                 const presetFile = await dataFolder.createFile(presetFileName)
@@ -130,7 +130,7 @@ export const Naming = () => {
         }
     }
 
-    const doesFileExits = async (fileName) => {
+    const doesPresetFileExist = async (fileName) => {
         try {
             await logToFile(`doesFileExists(${fileName})`, false)
             const dataFolder = await fs.getDataFolder()
@@ -151,7 +151,6 @@ export const Naming = () => {
             }
             const newPresets = presets.concat(inputVal)
             setPresets(newPresets)
-            console.log(newPresets)
             await writeToPresetFile(JSON.stringify({presets: newPresets}))
         } catch (e) {
             await logToFile(`savePreset();${e}`, true)
@@ -181,7 +180,6 @@ export const Naming = () => {
                 return item != template
             })
             setPresets(filteredPresets)
-            console.log(filteredPresets)
             await writeToPresetFile(JSON.stringify({presets: filteredPresets}))
             // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
             document.getElementById("saved-templates").selectedIndex = -1

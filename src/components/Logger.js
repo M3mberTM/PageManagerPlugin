@@ -12,6 +12,8 @@ export const checkForLog = async () => {
         return false
     }
 }
+
+// in order to avoid the log file becoming too big, only last 4 days are logged
 export const clearLog = async () => {
     try {
         const dataFolder = await fs.getDataFolder()
@@ -38,6 +40,7 @@ export const clearLog = async () => {
         alert(e)
     }
 }
+
 export const logToFile = async (content, isError) => {
     try {
         const dataFolder = await fs.getDataFolder()
@@ -56,14 +59,13 @@ export const logToFile = async (content, isError) => {
         const currentDate = new Date()
         let newContent = ""
         if (!finalEntry.includes(initialMsg)) {
+            // due to some error messages having multiple lines, app goes backwards in the log until it finds a date, then it compares that date
             let entry = ""
             const pattern = /^\w{4}-\w{1,2}-\w{1,2}/
             for (let i =0; i < lastEntries.length; i++) {
                 let currEntry = lastEntries[lastEntries.length-1-i]
-                console.log(currEntry)
                 if (pattern.exec(currEntry.trim()) != null) {
                     entry = currEntry
-                    console.log('Found the entry')
                     break
                 }
             }

@@ -8,7 +8,7 @@ import "./CommonStyles.css"
 export const About = ({dialog}) => {
     return (
         <div>
-            <sp-heading>PageOpeningPlugin Information</sp-heading>
+            <sp-heading>Page Manager Information</sp-heading>
             <sp-divider size="large"></sp-divider>
             <sp-body>
                 Greetings,
@@ -20,7 +20,7 @@ export const About = ({dialog}) => {
                 In case of an error in the plugin, it is recommended to notify me, the creator so I can fix the issue in the next version of the plugin. You can
                 do this in a number of ways. First, if you have a github account, you can make an Issue underneath my repository for this plugin. If you don't,
                 don't fret, you can also contact me on discord:
-                m3mber
+                <span class={"strong-text"}>m3mber</span>
             </sp-body>
             <sp-detail>PLUGIN DETAILS</sp-detail>
             <div class={"fit-row-style unimportant-button"}>

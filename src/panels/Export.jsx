@@ -11,8 +11,8 @@ import {ProjectModal} from "../components/ProjectModal";
 import {useDispatch} from "react-redux";
 import {setFiles} from "../reducers/fileSlice";
 import {logToFile} from "../components/Logger";
-// TODO go around and fix all the useEffect to have internal functions
-// TODO Add comments around the code
+
+// unfortunately, I couldn't find the react way to import uxp stuff it is imported using normal node.js way
 const fs = require('uxp').storage.localFileSystem;
 const core = require('photoshop').core
 const app = require("photoshop").app;
@@ -36,9 +36,10 @@ export const Export = () => {
     const presetFileName = 'projects.txt'
     const dispatch = useDispatch()
 
+    // updates the files shown each time they are changed in the other panels
     useEffect(() => {
-        // sorts the files in the same way as the file explorer does
         const loadedFiles = [...dirFiles]
+        // sorts the files in the same way as the file explorer does
         const collator = new Intl.Collator('en', {numeric: true, sensitivity: "base"})
         const sortedFiles = loadedFiles.sort((a, b) => collator.compare(a.name, b.name))
         setProjectFiles(sortedFiles)
@@ -47,7 +48,8 @@ export const Export = () => {
         setIsStart(true)
     }, [dirFiles])
 
-    useEffect( () => {
+    // Updates the page name each time it is changed in the Naming panel
+    useEffect(() => {
         const effectPageName = async () => {
             if (files.length > 0) {
                 await getPageName(files[currentPageIndex])
@@ -56,18 +58,24 @@ export const Export = () => {
         effectPageName()
     }, [namingTemplate])
 
+    // Updates the saved projects list
     useEffect(async () => {
-        const projectContents = await getPresetFileContents()
-        console.log(projectContents)
-        setProjects(projectContents)
-        setPresets(Object.keys(projectContents))
+        const effectProjectContents = async () => {
+            const projectContents = await getPresetFileContents()
+            console.log(projectContents)
+            setProjects(projectContents)
+            setPresets(Object.keys(projectContents))
+        }
+        effectProjectContents()
     }, [])
 
+    //Updates the import and export directories
     useEffect(() => {
         setDirectories(dirs)
         console.log(dirs)
     }, [dirs])
 
+    // automatically scrolls to the current file opened in the file list
     const elementScrollToView = () => {
         try {
             scrollRef.current.scrollIntoView({behavior: 'smooth'})
@@ -76,6 +84,7 @@ export const Export = () => {
             alert(e)
         }
     }
+
     const openFile = async (pageIndex) => {
         try {
             await logToFile(`openFile(${pageIndex})`, false)
@@ -98,6 +107,7 @@ export const Export = () => {
     const openNextFile = async (pageNum) => {
         try {
             await logToFile(`openNextFile(${pageNum})`, false)
+            // current function changes the state in photoshop, therefore it is called using executeAsModal
             await core.executeAsModal(() => openFile(pageNum))
         } catch (e) {
             await logToFile(`openNextFile(${pageNum});${e}`, true)
@@ -107,19 +117,20 @@ export const Export = () => {
     }
 
     const goToFile = async (pageIndex) => {
-       try {
-           await logToFile(`goToFile(${pageIndex})`, false)
-           const currentDoc = app.activeDocument
-           setCurrentPageIndex(pageIndex)
-           const newPageNum = files[pageIndex].pageNumber
-           setPageNumber(newPageNum)
-           await core.executeAsModal(() => openFile(pageIndex))
-           await core.executeAsModal(() => closeFile(currentDoc))
-       } catch(e){
-           await logToFile(`goToFile(${pageIndex});${e}`, true)
-           alert("Function goToFile")
-           alert(e)
-       }
+        try {
+            await logToFile(`goToFile(${pageIndex})`, false)
+            const currentDoc = app.activeDocument
+            setCurrentPageIndex(pageIndex)
+            const newPageNum = files[pageIndex].pageNumber
+            setPageNumber(newPageNum)
+            // Changes state of the Photoshop application, executeAsModal has to be used
+            await core.executeAsModal(() => openFile(pageIndex))
+            await core.executeAsModal(() => closeFile(currentDoc))
+        } catch (e) {
+            await logToFile(`goToFile(${pageIndex});${e}`, true)
+            alert("Function goToFile")
+            alert(e)
+        }
     }
 
     const goToNextFile = async (isForward) => {
@@ -129,19 +140,16 @@ export const Export = () => {
                 setIsStart(false)
             }
             const current = currentPageIndex
-            console.log(currentPageIndex)
             const currentPageNum = files[currentPageIndex].pageNumber
             const filesLength = files.length
             const currentDoc = app.activeDocument
-            console.log(currentDoc)
             if (isForward) {
                 if (current != filesLength - 1) {
                     setCurrentPageIndex(current + 1)
                     setPageNumber(currentPageNum + 1)
-                    console.log(`Page number: ${currentPageNum + 1}`)
-                    console.log(`Current page: ${current + 1}`)
                     await openNextFile(current + 1)
                     await getPageName(files[current + 1])
+                    // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
                 } else {
                     alert("Congratulation, you are done!")
@@ -150,15 +158,13 @@ export const Export = () => {
                 if (current != 0) {
                     setCurrentPageIndex(current - 1)
                     setPageNumber(currentPageNum - 1)
-                    console.log(`Page number: ${currentPageNum - 1}`)
-                    console.log(`Current page: ${current + 1}`)
                     await openNextFile(current - 1)
                     await getPageName(files[current - 1])
+                    // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
                 }
             }
             elementScrollToView()
-            console.log("Closed the file")
         } catch (e) {
             await logToFile(`goToNextFile(${isForward});${e}`, true)
             alert("Function goToNextFile")
@@ -177,6 +183,7 @@ export const Export = () => {
         }
     }
 
+    // Changes the file status to complete if not completed and vice versa
     const changeFileStatus = async (index) => {
         try {
             await logToFile(`changeFileStatus(${index})`, false)
@@ -231,10 +238,10 @@ export const Export = () => {
         }
     }
 
+    // gets the page name according to the template given in Naming panel
     const getPageName = async (currentPage) => {
         try {
             await logToFile(`getPageName(${currentPage})`, false)
-            console.log(currentPage)
             if (namingTemplate.length < 1) {
                 const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
                 setCurrentPageName(finalName)
@@ -293,12 +300,10 @@ export const Export = () => {
         try {
             await logToFile(`setNewPageNum(${newPageNum})`, false)
             const wantedPageNum = parseInt(newPageNum)
-            console.log(`Wanted page num: ${wantedPageNum}`)
             if (wantedPageNum == NaN) {
                 return
             }
             const pageNumDifference = wantedPageNum - pageNumber
-            console.log(`Difference to current page number: `)
             const ogPage = files[currentPageIndex]
             const updatedPage = {...ogPage, pageNumber: ogPage.pageNumber + pageNumDifference}
             const newFiles = files.map((item) => {
@@ -348,12 +353,10 @@ export const Export = () => {
     const fileExists = async (file) => {
         try {
             await logToFile(`fileExists(${file})`, false)
-            console.log(file)
             const entry = await fs.getEntryWithUrl(`${file}`)
-            console.log(entry)
             await entry.getMetadata()
             return true
-        } catch(e) {
+        } catch (e) {
             return false
         }
     }
@@ -376,7 +379,7 @@ export const Export = () => {
             } else {
                 await saveFile()
             }
-        } catch(e) {
+        } catch (e) {
             await logToFile(`overwriteCheck();${e}`, true)
             alert("Function overwriteCheck")
             alert(e)
@@ -387,21 +390,24 @@ export const Export = () => {
             await logToFile(`overwriteFile()`, false)
             await closeOverwriteDialog()
             await saveFile()
-        } catch(e) {
+        } catch (e) {
             await logToFile(`overwriteFile();${e}`, true)
             alert("Function overwriteFile")
             alert(e)
         }
     }
+
+    // if file is about to be overwritten, show overwrite dialog because uxp doesn't support overwrite dialog by default
     const openOverwriteDialog = async () => {
         try {
             await logToFile(`openOverwriteDialog()`, false)
             if (!overwriteAlert) {
                 overwriteAlert = document.createElement("dialog")
                 overwriteAlert.style.padding = "1rem"
-
+                // creates element in the root to server as a dialog
                 const root = createRoot(overwriteAlert)
-                root.render(<OverwriteModal dialog={overwriteAlert} handleClose={closeOverwriteDialog} fileToOverwriteName={currentPageName} overwriteFile={overwriteFile}/>)
+                root.render(<OverwriteModal dialog={overwriteAlert} handleClose={closeOverwriteDialog} fileToOverwriteName={currentPageName}
+                                            overwriteFile={overwriteFile}/>)
             }
             document.body.appendChild(overwriteAlert)
 
@@ -428,6 +434,7 @@ export const Export = () => {
                 projectDialog = document.createElement("dialog")
                 projectDialog.style.padding = "1rem"
 
+                // creates element in the root to server as a dialog
                 const root = createRoot(projectDialog)
                 root.render(<ProjectModal dialog={projectDialog} handleClose={closeProjectDialog} files={files} saveProject={saveProject}/>)
             }
@@ -508,14 +515,14 @@ export const Export = () => {
                     newProjects[presets[i]] = projects[presets[i]]
                 }
             }
-            const newPresets = presets.filter((item)=> {
+            const newPresets = presets.filter((item) => {
                 return item != inputVal
             })
             setProjects(newProjects)
             setPresets(newPresets)
             await writeToPresetFile(JSON.stringify(newProjects))
             document.getElementById("saved-projects").selectedIndex = -1
-        } catch(e) {
+        } catch (e) {
             await logToFile(`removeProject(${inputVal});${e}`, true)
             alert("Function remove Project")
             alert(e)
@@ -524,7 +531,6 @@ export const Export = () => {
 
     const saveProject = async (inputVal) => {
         try {
-
             await logToFile(`saveProject(${inputVal})`, false)
             const newProjects = await getPresetFileContents()
             newProjects[inputVal] = files
@@ -549,7 +555,7 @@ export const Export = () => {
             const selectedProject = projectContents[projectName]
             setProjectFiles(selectedProject)
             dispatch(setFiles(selectedProject))
-        } catch(e) {
+        } catch (e) {
             await logToFile(`loadProject(${projectName});${e}`, true)
             alert("Function loadProject")
             alert(e)
@@ -566,35 +572,48 @@ export const Export = () => {
                 <div id={"files"}>
                     {files.map((file, index) => <FileObject scrollRef={index == currentPageIndex ? scrollRef : undefined} name={file.name} status={file.isDone}
                                                             active={index == currentPageIndex} key={index} pageNum={file.pageNumber} goToFunc={goToFile}
-                                                            ></FileObject>)}
+                    ></FileObject>)}
                 </div>
             </div>
             <div class={"fit-row-style"}>
                 {isStart &&
                     <div>
                         <sp-action-button style={{width: "20%"}} disabled>{"<"}</sp-action-button>
-                        <sp-action-button className={"unimportant-button"} style={{width: "60%"}} onClick={() => {openStartingFile()}}>Start</sp-action-button>
+                        <sp-action-button className={"unimportant-button"} style={{width: "60%"}} onClick={() => {
+                            openStartingFile()
+                        }}>Start
+                        </sp-action-button>
                         <sp-action-button style={{width: "20%"}} disabled>{">"}</sp-action-button>
                     </div>
                 }
                 {!isStart &&
                     <div>
-                        <sp-action-button style={{width: "20%"}} onClick={() => {goToNextFile(false)}}>{"<"}</sp-action-button>
-                        <sp-action-button style={{width: "60%"}} onClick={() => {changeFileStatus(currentPageIndex)}}>Complete</sp-action-button>
-                        <sp-action-button style={{width: "20%"}} onClick={() => {goToNextFile(true)}}>{">"}</sp-action-button>
+                        <sp-action-button style={{width: "20%"}} onClick={() => {
+                            goToNextFile(false)
+                        }}>{"<"}</sp-action-button>
+                        <sp-action-button style={{width: "60%"}} onClick={() => {
+                            changeFileStatus(currentPageIndex)
+                        }}>Complete
+                        </sp-action-button>
+                        <sp-action-button style={{width: "20%"}} onClick={() => {
+                            goToNextFile(true)
+                        }}>{">"}</sp-action-button>
                     </div>
                 }
             </div>
             {isStart &&
                 <div class={"fit-row-style"}>
-                    <sp-action-button class={"button-100"} disabled>Save </sp-action-button>
+                    <sp-action-button class={"button-100"} disabled>Save</sp-action-button>
                 </div>
             }
 
             {!isStart &&
-            <div class={"fit-row-style"}>
-                <sp-action-button class={"unimportant-button button-100"} onClick={() => {overwriteCheck()}}>Save</sp-action-button>
-            </div>
+                <div class={"fit-row-style"}>
+                    <sp-action-button class={"unimportant-button button-100"} onClick={() => {
+                        overwriteCheck()
+                    }}>Save
+                    </sp-action-button>
+                </div>
             }
         </Section>
 
@@ -606,7 +625,9 @@ export const Export = () => {
                 <sp-action-button class={"button-100"} disabled>Set</sp-action-button>
             }
             {!isStart &&
-                <sp-action-button class={"button-100 unimportant-button"} onClick={() => {setNewPageNum(document.getElementById("page-number-input").value)}}>Set</sp-action-button>
+                <sp-action-button class={"button-100 unimportant-button"} onClick={() => {
+                    setNewPageNum(document.getElementById("page-number-input").value)
+                }}>Set</sp-action-button>
             }
             <sp-heading size={"XS"}>Current file name</sp-heading>
             <sp-heading size={"XXS"}>{currentPageName}</sp-heading>
@@ -621,10 +642,16 @@ export const Export = () => {
                 </sp-menu>
             </sp-dropdown>
             <div class={"fit-row-style"}>
-                <sp-action-button style={{width: "50%"}} onClick={() => {removeProject(document.getElementById("saved-projects").value)}}>Remove</sp-action-button>
+                <sp-action-button style={{width: "50%"}} onClick={() => {
+                    removeProject(document.getElementById("saved-projects").value)
+                }}>Remove
+                </sp-action-button>
                 <sp-action-button style={{width: "50%"}} onClick={() => loadProject(document.getElementById("saved-projects").value)}>Load</sp-action-button>
             </div>
-            <sp-action-button class={"button-100 unimportant-button"} onClick={() => {openProjectDialog()}}>Save</sp-action-button>
+            <sp-action-button class={"button-100 unimportant-button"} onClick={() => {
+                openProjectDialog()
+            }}>Save
+            </sp-action-button>
         </Section>
 
     </div>

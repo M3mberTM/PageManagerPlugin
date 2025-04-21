@@ -13,19 +13,13 @@ import store from "./reducers/store";
 
 const aboutController = new CommandController(({dialog}) => <About dialog={dialog}/>, {
     id: "showAbout",
-    title: "PageOpeningPlugin Info",
-    size: {width: 480, height: 480}
+    title: "Page Manager Info",
+    size: {width: 480, height: 480} // still don't understand what this line does
 });
 
 const importController = new PanelController(() => <Provider store={store}><Import/></Provider>, {
     id: "import", menuItems: [
-        {id: "reload4", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}, {
-            id: "dialog",
-            label: "About",
-            enabled: true,
-            checked: false,
-            oninvoke: () => aboutController.run()
-        }]
+        {id: "reload4", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
 })
 
 const namingController = new PanelController(() => <Provider store={store}><Naming/></Provider>, {

@@ -9,6 +9,7 @@ import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/fol
 import {ConvertModal} from "../components/ConvertModal";
 import {logToFile} from "../components/Logger";
 
+// Again, wasn't sure how to import uxp stuff react way
 const storage = require("uxp").storage
 const fs = storage.localFileSystem;
 const app = require("photoshop").app;
@@ -109,7 +110,7 @@ export const Import = () => {
             })
             dispatch(setFiles(allFiles.map((file, index) => {
                 return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
-            })))
+            }))) // sets to global variable
         } catch(e) {
             await logToFile(`getImportFiles(${setter});${e}`, true)
             alert("Function get Import folder")
@@ -127,7 +128,7 @@ export const Import = () => {
                 return
             }
 
-            dispatch(setExportFolder(folder.nativePath))
+            dispatch(setExportFolder(folder.nativePath)) // sets to global variable
         } catch(e) {
             await logToFile(`getExportFolder(${setter});${e}`, true)
             alert("Function get export folder")
@@ -269,15 +270,13 @@ export const Import = () => {
 
     const savePng = async (folder) => {
         // put png options here
-
+        const pngOptions = {interlaced: false}
         try {
             await logToFile(`savePng(${folder})`, false)
             const doc = app.activeDocument
-            console.log(doc)
             const fileName = doc.name.replace(/\.\w+$/, "")
             const entry = await folder.createFile(`${fileName}.png`, {overwrite: true})
-            console.log(entry)
-            await core.executeAsModal(async () => {await doc.saveAs.png(entry)})
+            await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
         } catch (e) {
             await logToFile(`savePng(${folder});${e}`, true)
             alert("Function save png")
@@ -291,11 +290,8 @@ export const Import = () => {
         try {
             await logToFile(`saveJpg(${folder})`, false)
             const doc = app.activeDocument
-            console.log("CURRENT DOC")
-            console.log(doc)
             const fileName = doc.name.replace(/\.\w+$/, "")
             const entry = await folder.createFile(`${fileName}.jpg`, {overwrite: true})
-            console.log(entry)
             await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
         } catch (e) {
             await logToFile(`saveJpg(${folder});${e}`, true)
