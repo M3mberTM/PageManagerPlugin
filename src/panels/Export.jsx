@@ -24,6 +24,7 @@ export const Export = () => {
     const dirs = useSelector((state) => state.folderSlice.value)
     const scrollRef = useRef()
     const [directories, setDirectories] = useState({})
+    const [isPanelFocused, setIsPanelFocused] = useState(false)
     const [currentPageIndex, setCurrentPageIndex] = useState(0)
     const [completedNum, setCompletedNum] = useState(0)
     const [pageNumber, setPageNumber] = useState(0)
@@ -35,6 +36,12 @@ export const Export = () => {
     let projectDialog = null
     const presetFileName = 'projects.txt'
     const dispatch = useDispatch()
+
+    const isFocus = useSelector(state => state.focusSlice.value)
+
+    useEffect(() => {
+        setIsPanelFocused(isFocus)
+    }, [isFocus])
 
     // updates the files shown each time they are changed in the other panels
     useEffect(() => {
@@ -562,6 +569,11 @@ export const Export = () => {
         }
     }
 
+    if (!isPanelFocused) {
+        return <div id={"export"}>
+
+        </div>
+    }
     return <div id={"export"}>
         {/*File showcase*/}
         <Section sectionName={"Files"} isTransparent={true}>

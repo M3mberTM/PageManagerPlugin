@@ -4,7 +4,7 @@ import "../components/CommonStyles.css";
 import {useState, useEffect} from "react";
 import {Section} from "../components/Section";
 import {setTemplate} from "../reducers/templateSlice";
-import {useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom";
 import {GuideModal} from "../components/GuideModal";
 import {clearLog, logToFile} from "../components/Logger";
@@ -14,13 +14,22 @@ const fs = require('uxp').storage.localFileSystem;
 export const Naming = () => {
     const exampleFilename = "FileName001"
     const exampleFileNumber = 1
+    // state vars
     const [shownName, setShownName] = useState("")
     const [presets, setPresets] = useState([])
+    const [isPanelFocused, setIsPanelFocused] = useState(true)
+    // other helpful vars
     const dispatch = useDispatch()
     let guideDialog = null;
     const presetFileName = 'presets.txt'
 
-    useEffect(async () => {
+    const isFocus = useSelector(state => state.focusSlice.value)
+
+    useEffect(() => {
+        setIsPanelFocused(isFocus)
+    }, [isFocus])
+
+    useEffect( () => {
         // load the preset file saved before starting anything
         const effectPresetContents = async () => {
             const presetContents = await getPresetFileContents()
@@ -28,7 +37,7 @@ export const Naming = () => {
             console.log(presetContents.presets)
             setPresets(presetContents.presets)
         }
-        effectPresetContents()
+        effectPresetContents().then(r => console.log("Loaded the presets"))
     }, [])
 
     const addLeadingZeros = async (num, size) => {
@@ -205,6 +214,12 @@ export const Naming = () => {
             alert("Function loadPreset")
             alert(e)
         }
+    }
+
+    if (!isPanelFocused) {
+        return <div id={"naming"}>
+
+        </div>
     }
 
     return <div id={"naming"}>

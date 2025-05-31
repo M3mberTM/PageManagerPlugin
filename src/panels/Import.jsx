@@ -6,25 +6,36 @@ import "../components/CommonStyles.css";
 import {setFiles} from "../reducers/fileSlice"
 import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
+import {setIsFocused} from "../reducers/focusSlice";
 import {ConvertModal} from "../components/ConvertModal";
 import {logToFile} from "../components/Logger";
+import {storage} from 'uxp';
+import {app} from "photoshop";
+import {core} from "photoshop";
+import os from "os";
+import {showAlert} from "../helpers/helperFuncs";
 
-// Again, wasn't sure how to import uxp stuff react way
-const storage = require("uxp").storage
 const fs = storage.localFileSystem;
-const app = require("photoshop").app;
-const core = require('photoshop').core;
-
 export const Import = () => {
     const [importPath, setImportPath] = useState("")
     const [exportPath, setExportPath] = useState("")
+    const [isPanelFocused, setIsPanelFocused] = useState(true)
     const [isExportChecked, setIsExportChecked] = useState(true)
     const [directories, setDirectories] = useState({})
+
+    // Selectors - used to transition information between plugin pages
     const dirs = useSelector((state) => state.folderSlice.value)
     const dirFiles = useSelector(state => state.fileSlice.value)
+    const isFocus = useSelector(state => state.focusSlice.value)
     const dispatch = useDispatch()
-    let convertDialog = null;
 
+    // Other helpful variables
+    let convertDialog = null; // used for dialogs so that it can be accessed anywhere in code
+    const pathDelimiter = os.platform() == "win32" ? "\\" : "/";
+
+    useEffect(() => {
+        setIsPanelFocused(isFocus)
+    }, [isFocus])
 
     useEffect(() => {
         setDirectories(dirs)
@@ -42,7 +53,6 @@ export const Import = () => {
             await logToFile(`getTruncatedString(${maxLength}, ${text})`, false)
             const actualLength = maxLength - 3
             const textLength = text.length
-            console.log(textLength)
             if (textLength > actualLength) {
                 return "..." + text.slice(textLength - actualLength, textLength)
             } else {
@@ -50,15 +60,17 @@ export const Import = () => {
             }
         } catch (e) {
             await logToFile(`getTruncatedString(${maxLength}, ${text});${e}`, true)
-            alert("Function Truncated string")
-            alert(e)
+            showAlert("Function Truncated string")
+            showAlert(e)
         }
     }
     const getFolder = async (setter) => {
         try {
             await logToFile(`getFolder(${setter})`, false)
             console.log("Getting folder")
+            dispatch(setIsFocused(false))
             const folder = await fs.getFolder();
+            dispatch(setIsFocused(true))
             if (folder == null) {
                 return
             }
@@ -67,8 +79,8 @@ export const Import = () => {
             return folder
         } catch(e) {
             await logToFile(`getFolder(${setter});${e}`, true)
-            alert("Function get folder")
-            alert(e)
+            showAlert("Function get folder")
+            showAlert(e)
         }
     }
 
@@ -76,12 +88,24 @@ export const Import = () => {
         try {
             await logToFile(`getFiles(${setter})`, false)
             console.log("Getting files")
-            const files = await fs.getFileForOpening({allowMultiple: true, types: storage.fileTypes.images.concat(["jpeg", "psd", "psb"])})
+            const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
+            dispatch(setIsFocused(false))
+            const files = await fs.getFileForOpening({allowMultiple: true, types: allowedFileExtensions})
+            dispatch(setIsFocused(true))
             if (files.length < 1) {
                 return
             }
+            const filteredFiles = files.filter((file)=> {
+                const fileName = file.name
+                const extension = fileName.substring(fileName.indexOf(".") + 1)
+                return allowedFileExtensions.includes(extension);
+            })
+            if (filteredFiles.length < 1) {
+                return
+            }
+            console.log(filteredFiles)
             const filePath = files[0].nativePath
-            const folder= filePath.substring(0,filePath.lastIndexOf("\\"))
+            const folder= filePath.substring(0,filePath.lastIndexOf(pathDelimiter))
             setter(await getTruncatedString(40, folder))
             dispatch(setImportFolder(folder))
             if (directories.exportDir.length < 1) {
@@ -90,8 +114,8 @@ export const Import = () => {
             return files
         } catch(e) {
             await logToFile(`getFiles(${setter});${e}`, true)
-            alert("Function get files")
-            alert(e)
+            showAlert("Function get files")
+            showAlert(e)
         }
     }
 
@@ -110,11 +134,11 @@ export const Import = () => {
             })
             dispatch(setFiles(allFiles.map((file, index) => {
                 return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
-            }))) // sets to global variable
+            })))
         } catch(e) {
             await logToFile(`getImportFiles(${setter});${e}`, true)
-            alert("Function get Import folder")
-            alert(e)
+            showAlert("Function get Import folder")
+            showAlert(e)
         }
     }
 
@@ -131,8 +155,8 @@ export const Import = () => {
             dispatch(setExportFolder(folder.nativePath)) // sets to global variable
         } catch(e) {
             await logToFile(`getExportFolder(${setter});${e}`, true)
-            alert("Function get export folder")
-            alert(e)
+            showAlert("Function get export folder")
+            showAlert(e)
         }
     }
 
@@ -145,8 +169,8 @@ export const Import = () => {
             dispatch(setShouldExport(newExportChecked))
         } catch (e) {
             await logToFile(`handleExportCheck();${e}`, true)
-            alert("Function handle Export check")
-            alert(e)
+            showAlert("Function handle Export check")
+            showAlert(e)
         }
     }
 
@@ -157,6 +181,7 @@ export const Import = () => {
         return Promise.all(promises)
     }
     const convertFiles = async (extension, folder) => {
+        console.log("Converting files")
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
         try {
@@ -190,8 +215,8 @@ export const Import = () => {
             }
         } catch (e) {
             await logToFile(`convertFiles(${extension}, ${folder});${e}`, true)
-            alert("Function convert files")
-            alert(e)
+            showAlert("Function convert files")
+            showAlert(e)
         }
     }
     const closeConvertDialog = async () => {
@@ -200,8 +225,8 @@ export const Import = () => {
             convertDialog.close()
         } catch(e) {
             await logToFile(`closeConvertDialog();${e}`, true)
-            alert("Function close convert dialog")
-            alert(e)
+            showAlert("Function close convert dialog")
+            showAlert(e)
         }
     }
 
@@ -227,8 +252,8 @@ export const Import = () => {
             })
         } catch(e) {
             await logToFile(`openConvertDialog();${e}`, true)
-            alert("Function open convert dialog")
-            alert(e)
+            showAlert("Function open convert dialog")
+            showAlert(e)
         }
     }
 
@@ -238,8 +263,8 @@ export const Import = () => {
             await core.executeAsModal(async () => {await app.open(entry)})
         } catch(e) {
             await logToFile(`openFile(${entry});${e}`, true)
-            alert("function open file")
-            alert(e)
+            showAlert("function open file")
+            showAlert(e)
         }
     }
 
@@ -263,8 +288,8 @@ export const Import = () => {
             }
         } catch(e) {
             await logToFile(`exportFile(${extension}, ${folder});${e}`, true)
-            alert("Function export file")
-            alert(e)
+            showAlert("Function export file")
+            showAlert(e)
         }
     }
 
@@ -279,8 +304,8 @@ export const Import = () => {
             await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
         } catch (e) {
             await logToFile(`savePng(${folder});${e}`, true)
-            alert("Function save png")
-            alert(e)
+            showAlert("Function save png")
+            showAlert(e)
         }
     }
 
@@ -295,8 +320,8 @@ export const Import = () => {
             await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
         } catch (e) {
             await logToFile(`saveJpg(${folder});${e}`, true)
-            alert("Function save jpg")
-            alert(e)
+            showAlert("Function save jpg")
+            showAlert(e)
         }
     }
 
@@ -309,8 +334,8 @@ export const Import = () => {
 
         } catch (e) {
             await logToFile(`closeCurrentFile();${e}`, true)
-            alert("Function close current file")
-            alert(e)
+            showAlert("Function close current file")
+            showAlert(e)
         }
     }
 
@@ -323,11 +348,15 @@ export const Import = () => {
                 return currentPath
             }
         } catch (e) {
-            alert("Function getPathValue")
-            alert(e)
+            showAlert("Function getPathValue")
+            showAlert(e)
         }
     }
+    if (!isPanelFocused) {
+        return <div id={"import"}>
 
+        </div>
+    }
     return <div id={"import"}>
         {/*Importing*/}
         <Section sectionName={"Import"} isTransparent={true}>
@@ -347,7 +376,11 @@ export const Import = () => {
                             :
                             <sp-action-button class={"unimportant-button"} style={{width: "50%"}} onClick={handleExportCheck}>Enable</sp-action-button>
                         }
-                        <sp-action-button class={"width-50"} onClick={() => getExportFolder(setExportPath)}>Choose folder</sp-action-button>
+                        {isExportChecked ?
+                            <sp-action-button class={"width-50"} onClick={() => getExportFolder(setExportPath)}>Choose folder</sp-action-button>
+                            :
+                            <sp-action-button class={"width-50"} disabled>Choose folder</sp-action-button>
+                        }
                     </div>
                 </div>
             </div>
