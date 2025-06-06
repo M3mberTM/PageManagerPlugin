@@ -1,6 +1,6 @@
 import React from 'react';
 import "./CommonStyles.css";
-import colorCombos from "./ColorCombos";
+import colorCombos from "../helpers/ColorCombos";
 export const Section = ({children, isTransparent, bgColor, headingColor, sectionName}) => {
     const borderRadius = "3px";
 

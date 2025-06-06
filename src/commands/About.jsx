@@ -3,7 +3,7 @@ import React from "react";
 import { versions } from "uxp";
 import os from "os";
 
-import "./CommonStyles.css"
+import "../components/CommonStyles.css"
 
 export const About = ({dialog}) => {
     return (

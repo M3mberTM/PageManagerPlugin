@@ -44,6 +44,13 @@
       }
     },
     {
+      "type": "command",
+      "id": "settings",
+      "label": {
+        "default": "Plugin Settings"
+      }
+    },
+    {
       "type": "panel",
       "id": "import",
       "label": {

@@ -8,12 +8,13 @@ import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {setIsFocused} from "../reducers/focusSlice";
 import {ConvertModal} from "../components/ConvertModal";
-import {logToFile} from "../components/Logger";
+import {logToFile} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
 import os from "os";
 import {showAlert} from "../helpers/helperFuncs";
+import {ActionButton} from "../components/ActionButton";
 
 const fs = storage.localFileSystem;
 export const Import = () => {
@@ -352,17 +353,12 @@ export const Import = () => {
             showAlert(e)
         }
     }
-    if (!isPanelFocused) {
-        return <div id={"import"}>
-
-        </div>
-    }
     return <div id={"import"}>
         {/*Importing*/}
         <Section sectionName={"Import"} isTransparent={true}>
             <sp-heading size={"S"} class={"heading-style"}>Choose import directory</sp-heading>
             <sp-body size={"S"}>{getPathValue(importPath)}</sp-body>
-            <sp-action-button class={"button-100"}  onClick={() => getImportFiles(setImportPath)}>Choose Files</sp-action-button>
+            <ActionButton classHandle={"button-100"}  clickHandler={() => getImportFiles(setImportPath)} isDisabled={!isPanelFocused}>Choose Files</ActionButton>
         </Section>
         {/*Exporting*/}
         <Section sectionName={"Export"} isTransparent={true}>
@@ -372,21 +368,17 @@ export const Import = () => {
                     <sp-body size={"S"}>{isExportChecked ? getPathValue(exportPath) : "Disabled"}</sp-body>
                     <div class={"fit-row-style"}>
                         {isExportChecked ?
-                            <sp-action-button class={"width-50"} onClick={handleExportCheck}>Disable</sp-action-button>
+                            <ActionButton classHandle={"width-50"} clickHandler={handleExportCheck} isDisabled={!isPanelFocused}>Disable</ActionButton>
                             :
-                            <sp-action-button class={"unimportant-button"} style={{width: "50%"}} onClick={handleExportCheck}>Enable</sp-action-button>
+                            <ActionButton classHandle={"unimportant-button"} style={{width: "50%"}} clickHandler={handleExportCheck} isDisabled={!isPanelFocused}>Enable</ActionButton>
                         }
-                        {isExportChecked ?
-                            <sp-action-button class={"width-50"} onClick={() => getExportFolder(setExportPath)}>Choose folder</sp-action-button>
-                            :
-                            <sp-action-button class={"width-50"} disabled>Choose folder</sp-action-button>
-                        }
+                        <ActionButton classHandle={"width-50"} clickHandler={() => getExportFolder(setExportPath)} isDisabled={!isExportChecked || !isPanelFocused}>Choose folder</ActionButton>
                     </div>
                 </div>
             </div>
         </Section>
                 <div id={"export-other"} style={{marginTop: "10px"}}>
-                    <sp-action-button class={"button-100 unimportant-button"} onClick={openConvertDialog}>Convert</sp-action-button>
+                    <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={openConvertDialog} isDisabled={!isPanelFocused}>Convert</ActionButton>
                 </div>
     </div>
 }

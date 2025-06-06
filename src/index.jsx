@@ -3,17 +3,24 @@ import React from "react";
 import "./styles.css";
 import {PanelController} from "./controllers/PanelController.jsx";
 import {CommandController} from "./controllers/CommandController.jsx";
-import {About} from "./components/About.jsx";
+import {About} from "./commands/About.jsx";
 import {entrypoints} from "uxp";
 import {Import} from "./panels/Import";
 import {Naming} from "./panels/Naming";
 import {Export} from "./panels/Export";
 import {Provider} from "react-redux";
 import store from "./reducers/store";
+import {Settings} from "./commands/Settings";
 
 const aboutController = new CommandController(({dialog}) => <About dialog={dialog}/>, {
     id: "showAbout",
     title: "Page Manager Info",
+    size: {width: 480, height: 480} // still don't understand what this line does
+});
+
+const settingsController = new CommandController(({dialog}) => <Settings dialog={dialog}/>, {
+    id: "settings",
+    title: "Page Manager Settings",
     size: {width: 480, height: 480} // still don't understand what this line does
 });
 
@@ -34,7 +41,8 @@ const exportController = new PanelController(() => <Provider store={store}><Expo
 
 entrypoints.setup({
     commands: {
-        showAbout: aboutController
+        showAbout: aboutController,
+        settings: settingsController
     },
     panels: {
         import: importController,

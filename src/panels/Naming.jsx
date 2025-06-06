@@ -7,7 +7,9 @@ import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom";
 import {GuideModal} from "../components/GuideModal";
-import {clearLog, logToFile} from "../components/Logger";
+import {clearLog, logToFile} from "../helpers/Logger";
+import {showAlert} from "../helpers/helperFuncs";
+import {ActionButton} from "../components/ActionButton";
 
 const fs = require('uxp').storage.localFileSystem;
 
@@ -22,7 +24,7 @@ export const Naming = () => {
     const dispatch = useDispatch()
     let guideDialog = null;
     const presetFileName = 'presets.txt'
-
+    // selectors
     const isFocus = useSelector(state => state.focusSlice.value)
 
     useEffect(() => {
@@ -34,10 +36,10 @@ export const Naming = () => {
         const effectPresetContents = async () => {
             const presetContents = await getPresetFileContents()
             await clearLog()
-            console.log(presetContents.presets)
+            console.log("loaded presets", presetContents.presets)
             setPresets(presetContents.presets)
         }
-        effectPresetContents().then(r => console.log("Loaded the presets"))
+        effectPresetContents().then()
     }, [])
 
     const addLeadingZeros = async (num, size) => {
@@ -48,8 +50,8 @@ export const Naming = () => {
             return num;
         } catch (e) {
             await logToFile(`addLeadingZeros(${num},${size});${e}`, true)
-            alert("Function add leading zeros")
-            alert(e)
+            showAlert("Function add leading zeros")
+            showAlert(e)
         }
     }
 
@@ -75,8 +77,8 @@ export const Naming = () => {
             dispatch(setTemplate(inputName)) // sets to global variable
         } catch (e) {
             await logToFile(`applyTemplate(${inputName});${e}`, true)
-            alert("Function handle Input change")
-            alert(e)
+            showAlert("Function handle Input change")
+            showAlert(e)
         }
     }
 
@@ -86,14 +88,15 @@ export const Naming = () => {
             guideDialog.close()
         } catch (e) {
             await logToFile(`closeGuideDialog();${e}`, true)
-            alert("Function close guide dialog")
-            alert(e)
+            showAlert("Function close guide dialog")
+            showAlert(e)
         }
     }
 
     const openGuideDialog = async () => {
         try {
             await logToFile(`openGuideDialog()`, false)
+            // WTF is this even. There has to be a better way of doing this but I am too lazy to look for the information
             if (!guideDialog) {
                 guideDialog = document.createElement("dialog")
                 guideDialog.style.padding = "1rem"
@@ -113,8 +116,8 @@ export const Naming = () => {
             })
         } catch (e) {
             await logToFile(`openGuideDialog();${e}`, true)
-            alert("Function open guide dialog")
-            alert(e)
+            showAlert("Function open guide dialog")
+            showAlert(e)
         }
     }
 
@@ -134,8 +137,8 @@ export const Naming = () => {
             }
         } catch (e) {
             await logToFile(`getPresetFileContents();${e}`, true)
-            alert("Function load preset")
-            alert(e)
+            showAlert("Function load preset")
+            showAlert(e)
         }
     }
 
@@ -163,8 +166,8 @@ export const Naming = () => {
             await writeToPresetFile(JSON.stringify({presets: newPresets}))
         } catch (e) {
             await logToFile(`savePreset();${e}`, true)
-            alert("Function save preset")
-            alert(e)
+            showAlert("Function save preset")
+            showAlert(e)
         }
     }
 
@@ -177,8 +180,8 @@ export const Naming = () => {
             console.log('Successfully written new preset')
         } catch (e) {
             await logToFile(`writeToPresetFile(${content});${e}`, true)
-            alert("Function add to preset file")
-            alert(e)
+            showAlert("Function add to preset file")
+            showAlert(e)
         }
     }
 
@@ -194,8 +197,8 @@ export const Naming = () => {
             document.getElementById("saved-templates").selectedIndex = -1
         } catch(e) {
             await logToFile(`deletePreset(${template});${e}`, true)
-            alert("Function deletePreset")
-            alert(e)
+            showAlert("Function deletePreset")
+            showAlert(e)
         }
     }
 
@@ -211,46 +214,41 @@ export const Naming = () => {
             await applyTemplate(template)
         } catch (e) {
             await logToFile(`loadPreset(${template});${e}`, true)
-            alert("Function loadPreset")
-            alert(e)
+            showAlert("Function loadPreset")
+            showAlert(e)
         }
     }
 
-    if (!isPanelFocused) {
-        return <div id={"naming"}>
-
-        </div>
-    }
 
     return <div id={"naming"}>
         {/*Heading*/}
         <Section sectionName={"Naming"} isTransparent={true}>
             <sp-heading size={"XXS"}>{shownName.length < 1 ? "FileName001" : shownName}</sp-heading>
             <sp-textfield class={"button-100"} id={"template-input"} placeholder={"Placeholder"}></sp-textfield>
-            <sp-action-button class={"button-100"} onClick={() => {
+            <ActionButton classHandle={"button-100"} clickHandler={() => {
                 applyTemplate(document.getElementById("template-input").value)
-            }}>Apply
-            </sp-action-button>
-            <sp-action-button class={"button-100"} onClick={savePreset}>Save preset</sp-action-button>
-            <sp-action-button class={"button-100 unimportant-button"} onClick={openGuideDialog}>Guide</sp-action-button>
+            }} isDisabled={!isPanelFocused}>Apply
+            </ActionButton>
+            <ActionButton classHandle={"button-100"} clickHandler={savePreset} isDisabled={!isPanelFocused}>Save preset</ActionButton>
+            <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={openGuideDialog} isDisabled={!isPanelFocused}>Guide</ActionButton>
         </Section>
 
         <Section isTransparent={true} sectionName={"Presets"}>
             <div class={"heading-style"}>
                 <div class={"fit-row-style"}>
-                    <sp-dropdown class={"button-100"} placeholder={"Choose a selection..."}>
+                    <sp-picker class={"button-100"} placeholder={"Choose a selection..."}>
                         <sp-menu slot={"options"} id={"saved-templates"}>
                             {presets.map((item, index) => {
                                 return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
                             })}
                         </sp-menu>
-                    </sp-dropdown>
-                    <sp-action-button class={"width-50"} onClick={async () => await deletePreset(document.getElementById("saved-templates").value)}>Delete
-                    </sp-action-button>
-                    <sp-action-button class={"width-50 unimportant-button"} onClick={() => {
+                    </sp-picker>
+                    <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isPanelFocused}>Delete
+                    </ActionButton>
+                    <ActionButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
                         loadPreset(document.getElementById("saved-templates").value)
-                    }}>Load
-                    </sp-action-button>
+                    }} isDisabled={!isPanelFocused}>Load
+                    </ActionButton>
                 </div>
             </div>
         </Section>
