@@ -14,7 +14,7 @@ import {logToFile} from "../helpers/Logger";
 import {app} from "photoshop";
 import {core} from "photoshop";
 import {storage} from 'uxp';
-import {showAlert} from "../helpers/helperFuncs";
+import {showAlert, entryExists} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 
 const fs = storage.localFileSystem;
@@ -365,16 +365,6 @@ export const Export = () => {
         }
     }
 
-    const fileExists = async (file) => {
-        try {
-            await logToFile(`fileExists(${file})`, false)
-            const entry = await fs.getEntryWithUrl(`${file}`)
-            await entry.getMetadata()
-            return true
-        } catch (e) {
-            return false
-        }
-    }
     const overwriteCheck = async () => {
         try {
             await logToFile(`overwriteCheck()`, false)
@@ -389,7 +379,7 @@ export const Export = () => {
             }
 
             const currentFile = `${directories.exportDir}\\${currentPageName}.psd`
-            if (await fileExists(currentFile)) {
+            if (await entryExists(currentFile)) {
                 await openOverwriteDialog()
             } else {
                 await saveFile()
@@ -489,7 +479,7 @@ export const Export = () => {
         try {
             await logToFile(`getPresetFileContents()`, false)
             const dataFolder = await fs.getDataFolder()
-            if (await fileExists(`${dataFolder.nativePath}\\${presetFileName}`)) {
+            if (await entryExists(`${dataFolder.nativePath}\\${presetFileName}`)) {
                 console.log("Saved projects file exists already")
                 const presetFile = await dataFolder.getEntry(presetFileName)
                 const fileContent = await presetFile.read()

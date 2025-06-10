@@ -2,6 +2,7 @@ import React from "react";
 
 import "../components/CommonStyles.css"
 import {SettingOption} from "../components/SettingOption";
+// TODO Finish this component
 
 export const Settings = ({dialog}) => {
     return (

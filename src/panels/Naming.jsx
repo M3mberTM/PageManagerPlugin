@@ -7,8 +7,8 @@ import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom";
 import {GuideModal} from "../components/GuideModal";
-import {clearLog, logToFile} from "../helpers/Logger";
-import {showAlert} from "../helpers/helperFuncs";
+import {logToFile} from "../helpers/Logger";
+import {createDataFolderStruct, showAlert} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 
 const fs = require('uxp').storage.localFileSystem;
@@ -35,11 +35,11 @@ export const Naming = () => {
         // load the preset file saved before starting anything
         const effectPresetContents = async () => {
             const presetContents = await getPresetFileContents()
-            await clearLog()
             console.log("loaded presets", presetContents.presets)
             setPresets(presetContents.presets)
         }
         effectPresetContents().then()
+        createDataFolderStruct().then()
     }, [])
 
     const addLeadingZeros = async (num, size) => {

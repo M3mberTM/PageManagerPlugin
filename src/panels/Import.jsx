@@ -8,12 +8,12 @@ import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {setIsFocused} from "../reducers/focusSlice";
 import {ConvertModal} from "../components/ConvertModal";
-import {logToFile} from "../helpers/Logger";
+import {logToFile, info} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
 import os from "os";
-import {showAlert} from "../helpers/helperFuncs";
+import {showAlert} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 
 const fs = storage.localFileSystem;
@@ -67,6 +67,7 @@ export const Import = () => {
     }
     const getFolder = async (setter) => {
         try {
+            info()
             await logToFile(`getFolder(${setter})`, false)
             console.log("Getting folder")
             dispatch(setIsFocused(false))
