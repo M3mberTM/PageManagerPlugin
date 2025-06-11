@@ -2,9 +2,8 @@ import {storage} from 'uxp';
 import os from "os";
 
 const fs = storage.localFileSystem;
-const pathDelimiter = os.platform() == "win32" ? "\\" : "/";
+const PATH_DELIMITER = os.platform() == "win32" ? "\\" : "/";
 
-const DATA_FOLDER = await fs.getDataFolder()
 const LOG_FOLDER = "logs"
 const STORAGE_FOLDER = "storage"
 const SETTINGS_FOLDER = "settings"
@@ -32,19 +31,20 @@ export const entryExists = async (entryToExist) => {
 
 export const createDataFolderStruct = async () => {
     // creates all the folders necessary for the plugin if they don't exist
-    console.log("Creating the data folder structure")
-    const folderPrefix = `${DATA_FOLDER.nativePath}${pathDelimiter}`
+    console.log("==========Creating the data folder structure==========")
+    const dataFolder = await fs.getDataFolder()
+    const folderPrefix = `${dataFolder.nativePath}${PATH_DELIMITER}`
     if (!await entryExists(`${folderPrefix}${LOG_FOLDER}`)) {
         console.info("-----Log folder missing. Creating log folder-----")
-        await DATA_FOLDER.createFolder(LOG_FOLDER)
+        await dataFolder.createFolder(LOG_FOLDER)
     }
     if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}`)) {
         console.info("-----Storage folder missing. Creating storage folder-----")
-        await DATA_FOLDER.createFolder(STORAGE_FOLDER)
+        await dataFolder.createFolder(STORAGE_FOLDER)
     }
     if (!await entryExists(`${folderPrefix}${SETTINGS_FOLDER}`)) {
         console.info("-----Settings folder missing. Creating settings folder-----")
-        await DATA_FOLDER.createFolder(SETTINGS_FOLDER)
+        await dataFolder.createFolder(SETTINGS_FOLDER)
     }
     await populateDataFolders()
 }
@@ -60,39 +60,61 @@ const populateDataFolders = async () => {
     Logs will be handled separately, as they will be removed and added every x days
      */
     try {
-        console.log("populating data folders")
-        const folderPrefix = `${DATA_FOLDER.nativePath}${pathDelimiter}`
-        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${pathDelimiter}presets.json`)) {
+        console.log("==========Populating data folders==========")
+        const dataFolder = await fs.getDataFolder()
+        const folderPrefix = `${dataFolder.nativePath}${PATH_DELIMITER}`
+        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}presets.json`)) {
             console.info("-----No presets.json found. Creating presets.json-----")
             const storageFolder = await fs.getEntryWithUrl(`${folderPrefix}${STORAGE_FOLDER}`)
             const presetFile  = await storageFolder.createFile("presets.json")
             await presetFile.write(JSON.stringify(DEFAULT_PRESET_VAL))
         }
-        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${pathDelimiter}projects.json`)) {
+        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}projects.json`)) {
             console.info("-----No projects.json found. Creating projects.json-----")
             const storageFolder = await fs.getEntryWithUrl(`${folderPrefix}${STORAGE_FOLDER}`)
             const presetFile  = await storageFolder.createFile("projects.json")
             await presetFile.write(JSON.stringify(DEFAULT_PROJECTS_VAL))
         }
-        if (!await entryExists(`${folderPrefix}${SETTINGS_FOLDER}${pathDelimiter}settings.json`)) {
+        if (!await entryExists(`${folderPrefix}${SETTINGS_FOLDER}${PATH_DELIMITER}settings.json`)) {
             console.info("-----No settings.json found. Creating settings.json-----")
             const settingsFolder = await fs.getEntryWithUrl(`${folderPrefix}${SETTINGS_FOLDER}`)
             const presetFile  = await settingsFolder.createFile("settings.json")
             await presetFile.write(JSON.stringify(DEFAULT_SETTINGS_VAL))
         }
     } catch(e) {
-        alert(e)
+        showAlert(e)
     }
 }
 
-/* implement writeToFile function
-Takes file as an argument
-converts the file to entry
-writes to file
- */
+export const writeToFile = async (filePath, content) => {
+    try {
+        const fileEntry = await fs.getEntryWithUrl(filePath)
+        await fileEntry.write(content, {append: false})
+        return true
+    } catch (e) {
+        showAlert(e)
+        return false
+    }
+}
 
-/* implement appendToFile function
-takes file as an argument
-Converts the file to entry
-appends to the file
- */
+export const appendToFile = async (filePath, content) => {
+    try {
+        const fileEntry = await fs.getEntryWithUrl(filePath)
+        await fileEntry.write(content, {append: true})
+        return true
+    } catch(e) {
+        showAlert(e)
+        return false
+    }
+}
+
+export const readFile = async (filePath) => {
+    try {
+        const fileEntry = await fs.getEntryWithUrl(filePath)
+        return await fileEntry.read()
+    } catch (e) {
+        showAlert(e)
+        return undefined
+    }
+}
+

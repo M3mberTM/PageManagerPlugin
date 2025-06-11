@@ -44,12 +44,10 @@ export const Naming = () => {
 
     const addLeadingZeros = async (num, size) => {
         try {
-            await logToFile(`addLeadingZeros(${num},${size})`, false)
             num = num.toString();
             while (num.length < size) num = "0" + num;
             return num;
         } catch (e) {
-            await logToFile(`addLeadingZeros(${num},${size});${e}`, true)
             showAlert("Function add leading zeros")
             showAlert(e)
         }
@@ -57,7 +55,6 @@ export const Naming = () => {
 
     const applyTemplate = async (inputName) => {
         try {
-            await logToFile(`applyTemplate(${inputName})`, false)
             if (inputName.length < 1) {
                 alert("Template is empty")
                 return
@@ -76,7 +73,6 @@ export const Naming = () => {
             setShownName(leadingZerosAppend)
             dispatch(setTemplate(inputName)) // sets to global variable
         } catch (e) {
-            await logToFile(`applyTemplate(${inputName});${e}`, true)
             showAlert("Function handle Input change")
             showAlert(e)
         }
@@ -84,10 +80,8 @@ export const Naming = () => {
 
     const closeGuideDialog = async () => {
         try {
-            await logToFile(`closeGuideDialog()`, false)
             guideDialog.close()
         } catch (e) {
-            await logToFile(`closeGuideDialog();${e}`, true)
             showAlert("Function close guide dialog")
             showAlert(e)
         }
@@ -95,7 +89,6 @@ export const Naming = () => {
 
     const openGuideDialog = async () => {
         try {
-            await logToFile(`openGuideDialog()`, false)
             // WTF is this even. There has to be a better way of doing this but I am too lazy to look for the information
             if (!guideDialog) {
                 guideDialog = document.createElement("dialog")
@@ -115,7 +108,6 @@ export const Naming = () => {
                 title: "Template guide",
             })
         } catch (e) {
-            await logToFile(`openGuideDialog();${e}`, true)
             showAlert("Function open guide dialog")
             showAlert(e)
         }
@@ -123,7 +115,6 @@ export const Naming = () => {
 
     const getPresetFileContents = async () => {
         try {
-            await logToFile(`getPresetFileContents()`, false)
             const dataFolder = await fs.getDataFolder()
             if (await doesPresetFileExist(presetFileName)) {
                 const presetFile = await dataFolder.getEntry(presetFileName)
@@ -136,7 +127,6 @@ export const Naming = () => {
                 return initialContent
             }
         } catch (e) {
-            await logToFile(`getPresetFileContents();${e}`, true)
             showAlert("Function load preset")
             showAlert(e)
         }
@@ -144,7 +134,6 @@ export const Naming = () => {
 
     const doesPresetFileExist = async (fileName) => {
         try {
-            await logToFile(`doesFileExists(${fileName})`, false)
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(fileName)
             return true
@@ -155,7 +144,6 @@ export const Naming = () => {
 
     const savePreset = async () => {
         try {
-            await logToFile(`savePreset()`, false)
             const inputVal = document.getElementById("template-input").value
             if (inputVal.length < 1) {
                 alert("No preset was inputted")
@@ -165,7 +153,6 @@ export const Naming = () => {
             setPresets(newPresets)
             await writeToPresetFile(JSON.stringify({presets: newPresets}))
         } catch (e) {
-            await logToFile(`savePreset();${e}`, true)
             showAlert("Function save preset")
             showAlert(e)
         }
@@ -173,13 +160,11 @@ export const Naming = () => {
 
     const writeToPresetFile = async (content) => {
         try {
-            await logToFile(`writeToPresetFile(${content})`, false)
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(presetFileName)
             await file.write(content)
             console.log('Successfully written new preset')
         } catch (e) {
-            await logToFile(`writeToPresetFile(${content});${e}`, true)
             showAlert("Function add to preset file")
             showAlert(e)
         }
@@ -187,7 +172,6 @@ export const Naming = () => {
 
     const deletePreset = async (template) => {
         try {
-            await logToFile(`deletePreset(${template})`, false)
             const filteredPresets = presets.filter((item) => {
                 return item != template
             })
@@ -196,7 +180,6 @@ export const Naming = () => {
             // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
             document.getElementById("saved-templates").selectedIndex = -1
         } catch(e) {
-            await logToFile(`deletePreset(${template});${e}`, true)
             showAlert("Function deletePreset")
             showAlert(e)
         }
@@ -204,7 +187,6 @@ export const Naming = () => {
 
     const loadPreset =  async (template) => {
         try {
-            await logToFile(`loadPreset(${template})`, false)
             if (template == undefined || template == null) {
                 return
             }
@@ -213,7 +195,6 @@ export const Naming = () => {
             }
             await applyTemplate(template)
         } catch (e) {
-            await logToFile(`loadPreset(${template});${e}`, true)
             showAlert("Function loadPreset")
             showAlert(e)
         }

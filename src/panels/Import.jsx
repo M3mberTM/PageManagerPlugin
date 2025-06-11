@@ -8,7 +8,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {setIsFocused} from "../reducers/focusSlice";
 import {ConvertModal} from "../components/ConvertModal";
-import {logToFile, info} from "../helpers/Logger";
+import {funcCaller} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
@@ -51,7 +51,6 @@ export const Import = () => {
 
     const getTruncatedString = async (maxLength, text) => {
         try {
-            await logToFile(`getTruncatedString(${maxLength}, ${text})`, false)
             const actualLength = maxLength - 3
             const textLength = text.length
             if (textLength > actualLength) {
@@ -60,15 +59,12 @@ export const Import = () => {
                 return "..." + text
             }
         } catch (e) {
-            await logToFile(`getTruncatedString(${maxLength}, ${text});${e}`, true)
             showAlert("Function Truncated string")
             showAlert(e)
         }
     }
     const getFolder = async (setter) => {
         try {
-            info()
-            await logToFile(`getFolder(${setter})`, false)
             console.log("Getting folder")
             dispatch(setIsFocused(false))
             const folder = await fs.getFolder();
@@ -80,7 +76,6 @@ export const Import = () => {
             setter(await getTruncatedString(40, folder.nativePath))
             return folder
         } catch(e) {
-            await logToFile(`getFolder(${setter});${e}`, true)
             showAlert("Function get folder")
             showAlert(e)
         }
@@ -88,7 +83,6 @@ export const Import = () => {
 
     const getFiles = async (setter) => {
         try {
-            await logToFile(`getFiles(${setter})`, false)
             console.log("Getting files")
             const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
             dispatch(setIsFocused(false))
@@ -115,7 +109,6 @@ export const Import = () => {
             }
             return files
         } catch(e) {
-            await logToFile(`getFiles(${setter});${e}`, true)
             showAlert("Function get files")
             showAlert(e)
         }
@@ -123,11 +116,10 @@ export const Import = () => {
 
     const getImportFiles = async (setter) => {
         try {
-            await logToFile(`getImportFiles(${setter})`, false)
             console.log("Import folder")
             const files = await getFiles(setter)
 
-            if (files == undefined) {
+            if (files === undefined) {
                 return
             }
             const allFiles = files.filter(entry => {
@@ -138,7 +130,6 @@ export const Import = () => {
                 return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
             })))
         } catch(e) {
-            await logToFile(`getImportFiles(${setter});${e}`, true)
             showAlert("Function get Import folder")
             showAlert(e)
         }
@@ -146,17 +137,15 @@ export const Import = () => {
 
     const getExportFolder = async (setter) => {
         try {
-            await logToFile(`getExportFolder(${setter})`, false)
             console.log("Export folder")
             const folder = await getFolder(setter)
 
-            if (folder == undefined) {
+            if (folder === undefined) {
                 return
             }
 
             dispatch(setExportFolder(folder.nativePath)) // sets to global variable
         } catch(e) {
-            await logToFile(`getExportFolder(${setter});${e}`, true)
             showAlert("Function get export folder")
             showAlert(e)
         }
@@ -164,13 +153,11 @@ export const Import = () => {
 
     const handleExportCheck = async () => {
         try {
-            await logToFile(`handleExportCheck()`, false)
             const newExportChecked = !isExportChecked;
             setIsExportChecked(newExportChecked)
             console.log(`Export switched to: ${newExportChecked}`)
             dispatch(setShouldExport(newExportChecked))
         } catch (e) {
-            await logToFile(`handleExportCheck();${e}`, true)
             showAlert("Function handle Export check")
             showAlert(e)
         }
@@ -187,7 +174,6 @@ export const Import = () => {
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
         try {
-            await logToFile(`convertFiles(${extension}, ${folder})`, false)
             if (folder.length < 1 ) {
                 alert("No folder selected")
                 return
@@ -216,17 +202,14 @@ export const Import = () => {
                 await closeCurrentFile()
             }
         } catch (e) {
-            await logToFile(`convertFiles(${extension}, ${folder});${e}`, true)
             showAlert("Function convert files")
             showAlert(e)
         }
     }
     const closeConvertDialog = async () => {
         try {
-            await logToFile(`closeConvertDialog()`, false)
             convertDialog.close()
         } catch(e) {
-            await logToFile(`closeConvertDialog();${e}`, true)
             showAlert("Function close convert dialog")
             showAlert(e)
         }
@@ -234,7 +217,6 @@ export const Import = () => {
 
     const openConvertDialog = async () => {
         try {
-            await logToFile(`openConvertDialog()`, false)
             if (!convertDialog) {
                 convertDialog = document.createElement("dialog")
                 convertDialog.style.padding = "1rem"
@@ -253,7 +235,6 @@ export const Import = () => {
                 title: "Convert project",
             })
         } catch(e) {
-            await logToFile(`openConvertDialog();${e}`, true)
             showAlert("Function open convert dialog")
             showAlert(e)
         }
@@ -261,10 +242,8 @@ export const Import = () => {
 
     const openFile = async (entry) => {
         try {
-            await logToFile(`openFile(${entry})`, false)
             await core.executeAsModal(async () => {await app.open(entry)})
         } catch(e) {
-            await logToFile(`openFile(${entry});${e}`, true)
             showAlert("function open file")
             showAlert(e)
         }
@@ -272,7 +251,6 @@ export const Import = () => {
 
     const exportFile = async (extension, folder) => {
         try {
-            await logToFile(`exportFile(${extension}, ${folder})`, false)
             switch (extension) {
                 case "png":
                     // Export into png function
@@ -289,7 +267,6 @@ export const Import = () => {
                     break
             }
         } catch(e) {
-            await logToFile(`exportFile(${extension}, ${folder});${e}`, true)
             showAlert("Function export file")
             showAlert(e)
         }
@@ -299,13 +276,11 @@ export const Import = () => {
         // put png options here
         const pngOptions = {interlaced: false}
         try {
-            await logToFile(`savePng(${folder})`, false)
             const doc = app.activeDocument
             const fileName = doc.name.replace(/\.\w+$/, "")
             const entry = await folder.createFile(`${fileName}.png`, {overwrite: true})
             await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
         } catch (e) {
-            await logToFile(`savePng(${folder});${e}`, true)
             showAlert("Function save png")
             showAlert(e)
         }
@@ -315,13 +290,11 @@ export const Import = () => {
         // put jpg options here
         const jpgOptions = {quality: 12}
         try {
-            await logToFile(`saveJpg(${folder})`, false)
             const doc = app.activeDocument
             const fileName = doc.name.replace(/\.\w+$/, "")
             const entry = await folder.createFile(`${fileName}.jpg`, {overwrite: true})
             await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
         } catch (e) {
-            await logToFile(`saveJpg(${folder});${e}`, true)
             showAlert("Function save jpg")
             showAlert(e)
         }
@@ -329,13 +302,11 @@ export const Import = () => {
 
     const closeCurrentFile = async () => {
         try {
-            await logToFile(`closeCurrentFile()`, false)
             const doc = app.activeDocument
             console.log(doc)
             await core.executeAsModal(async () => {await doc.close()})
 
         } catch (e) {
-            await logToFile(`closeCurrentFile();${e}`, true)
             showAlert("Function close current file")
             showAlert(e)
         }
@@ -373,7 +344,7 @@ export const Import = () => {
                             :
                             <ActionButton classHandle={"unimportant-button"} style={{width: "50%"}} clickHandler={handleExportCheck} isDisabled={!isPanelFocused}>Enable</ActionButton>
                         }
-                        <ActionButton classHandle={"width-50"} clickHandler={() => getExportFolder(setExportPath)} isDisabled={!isExportChecked || !isPanelFocused}>Choose folder</ActionButton>
+                        <ActionButton classHandle={"width-50"} clickHandler={() => funcCaller(getExportFolder, setExportPath)} isDisabled={!isExportChecked || !isPanelFocused}>Choose folder</ActionButton>
                     </div>
                 </div>
             </div>

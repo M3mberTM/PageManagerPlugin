@@ -51,3 +51,4 @@ entrypoints.setup({
     }
 });
 
+console.log("Start")
