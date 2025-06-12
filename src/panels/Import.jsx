@@ -8,7 +8,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {setIsFocused} from "../reducers/focusSlice";
 import {ConvertModal} from "../components/ConvertModal";
-import {funcCaller} from "../helpers/Logger";
+import {logDecorator} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
@@ -49,7 +49,7 @@ export const Import = () => {
         }
     }, [importPath])
 
-    const getTruncatedString = async (maxLength, text) => {
+    const getTruncatedString = logDecorator((maxLength, text) => {
         try {
             const actualLength = maxLength - 3
             const textLength = text.length
@@ -62,8 +62,8 @@ export const Import = () => {
             showAlert("Function Truncated string")
             showAlert(e)
         }
-    }
-    const getFolder = async (setter) => {
+    })
+    const getFolder = logDecorator(async (setter) => {
         try {
             console.log("Getting folder")
             dispatch(setIsFocused(false))
@@ -79,9 +79,9 @@ export const Import = () => {
             showAlert("Function get folder")
             showAlert(e)
         }
-    }
+    })
 
-    const getFiles = async (setter) => {
+    const getFiles = logDecorator(async (setter) => {
         try {
             console.log("Getting files")
             const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
@@ -112,9 +112,9 @@ export const Import = () => {
             showAlert("Function get files")
             showAlert(e)
         }
-    }
+    })
 
-    const getImportFiles = async (setter) => {
+    const getImportFiles = logDecorator(async (setter) => {
         try {
             console.log("Import folder")
             const files = await getFiles(setter)
@@ -133,9 +133,9 @@ export const Import = () => {
             showAlert("Function get Import folder")
             showAlert(e)
         }
-    }
+    })
 
-    const getExportFolder = async (setter) => {
+    const getExportFolder = logDecorator(async (setter) => {
         try {
             console.log("Export folder")
             const folder = await getFolder(setter)
@@ -149,9 +149,9 @@ export const Import = () => {
             showAlert("Function get export folder")
             showAlert(e)
         }
-    }
+    })
 
-    const handleExportCheck = async () => {
+    const handleExportCheck = logDecorator(() => {
         try {
             const newExportChecked = !isExportChecked;
             setIsExportChecked(newExportChecked)
@@ -161,7 +161,7 @@ export const Import = () => {
             showAlert("Function handle Export check")
             showAlert(e)
         }
-    }
+    })
 
     const getAllEntries = (entriesUrl) => {
         const promises = entriesUrl.map(async (item) => {
@@ -169,7 +169,7 @@ export const Import = () => {
         })
         return Promise.all(promises)
     }
-    const convertFiles = async (extension, folder) => {
+    const convertFiles = logDecorator(async (extension, folder) => {
         console.log("Converting files")
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
@@ -205,17 +205,17 @@ export const Import = () => {
             showAlert("Function convert files")
             showAlert(e)
         }
-    }
-    const closeConvertDialog = async () => {
+    })
+    const closeConvertDialog = logDecorator(() => {
         try {
             convertDialog.close()
         } catch(e) {
             showAlert("Function close convert dialog")
             showAlert(e)
         }
-    }
+    })
 
-    const openConvertDialog = async () => {
+    const openConvertDialog = logDecorator(async () => {
         try {
             if (!convertDialog) {
                 convertDialog = document.createElement("dialog")
@@ -238,18 +238,18 @@ export const Import = () => {
             showAlert("Function open convert dialog")
             showAlert(e)
         }
-    }
+    })
 
-    const openFile = async (entry) => {
+    const openFile = logDecorator(async (entry) => {
         try {
             await core.executeAsModal(async () => {await app.open(entry)})
         } catch(e) {
             showAlert("function open file")
             showAlert(e)
         }
-    }
+    })
 
-    const exportFile = async (extension, folder) => {
+    const exportFile = logDecorator(async (extension, folder) => {
         try {
             switch (extension) {
                 case "png":
@@ -270,9 +270,9 @@ export const Import = () => {
             showAlert("Function export file")
             showAlert(e)
         }
-    }
+    })
 
-    const savePng = async (folder) => {
+    const savePng = logDecorator(async (folder) => {
         // put png options here
         const pngOptions = {interlaced: false}
         try {
@@ -284,9 +284,9 @@ export const Import = () => {
             showAlert("Function save png")
             showAlert(e)
         }
-    }
+    })
 
-    const saveJpg = async (folder) => {
+    const saveJpg = logDecorator(async (folder) => {
         // put jpg options here
         const jpgOptions = {quality: 12}
         try {
@@ -298,9 +298,9 @@ export const Import = () => {
             showAlert("Function save jpg")
             showAlert(e)
         }
-    }
+    })
 
-    const closeCurrentFile = async () => {
+    const closeCurrentFile = logDecorator(async () => {
         try {
             const doc = app.activeDocument
             console.log(doc)
@@ -310,8 +310,9 @@ export const Import = () => {
             showAlert("Function close current file")
             showAlert(e)
         }
-    }
+    })
 
+    // todo Use this method everytime where setting paths. After setting, call it using asyncLogDecorator
     const getPathValue =  (currentPath) => {
        // Returns a placeholder value for folders if the current path is empty
         try {
@@ -344,7 +345,7 @@ export const Import = () => {
                             :
                             <ActionButton classHandle={"unimportant-button"} style={{width: "50%"}} clickHandler={handleExportCheck} isDisabled={!isPanelFocused}>Enable</ActionButton>
                         }
-                        <ActionButton classHandle={"width-50"} clickHandler={() => funcCaller(getExportFolder, setExportPath)} isDisabled={!isExportChecked || !isPanelFocused}>Choose folder</ActionButton>
+                        <ActionButton classHandle={"width-50"} clickHandler={() => getExportFolder(setExportPath)} isDisabled={!isExportChecked || !isPanelFocused}>Choose folder</ActionButton>
                     </div>
                 </div>
             </div>

@@ -112,14 +112,20 @@ const clearLogs = async () => {
 
 }
 
-export const funcCaller = async function (funcReference, ...args) {
-    try {
-        info(funcReference.name, args)
-        await funcReference(...args)
-    } catch (e) {
-        error(funcReference.name, args, e.message)
+export function logDecorator(fn) {
+    return async function(...args) {
+        let result;
+        try {
+            // console.log("Before function")
+            result = await fn.call(this, ...args)
+            // console.log("After function")
+        } catch (e) {
+           // console.error("Something happened")
+        }
+        return result
     }
 }
+
 
 // in order to avoid the log file becoming too big, only last 4 days are logged
 
