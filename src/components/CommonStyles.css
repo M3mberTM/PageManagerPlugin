@@ -31,6 +31,11 @@ TODO Organize this css more
     background-color: var(--highlight-color);
 }
 
+.unimportant-button-disabled {
+    background-color: #35567c;
+    color: #9aa7b7;
+}
+
 .right-div-align {
     width: fit-content;
     margin-left: auto;

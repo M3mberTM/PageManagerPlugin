@@ -12,14 +12,15 @@ import {logDecorator} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
-import os from "os";
-import {showAlert} from "../helpers/helper";
+import {PATH_DELIMITER} from "../helpers/constants";
 import {ActionButton} from "../components/ActionButton";
+import {HighlightButton} from "../components/HighlightButton";
 
 const fs = storage.localFileSystem;
+const defaultFolderPath = "Path To Folder"
 export const Import = () => {
-    const [importPath, setImportPath] = useState("")
-    const [exportPath, setExportPath] = useState("")
+    const [importPath, setImportPath] = useState(defaultFolderPath)
+    const [exportPath, setExportPath] = useState(defaultFolderPath)
     const [isPanelFocused, setIsPanelFocused] = useState(true)
     const [isExportChecked, setIsExportChecked] = useState(true)
     const [directories, setDirectories] = useState({})
@@ -32,7 +33,6 @@ export const Import = () => {
 
     // Other helpful variables
     let convertDialog = null; // used for dialogs so that it can be accessed anywhere in code
-    const pathDelimiter = os.platform() == "win32" ? "\\" : "/";
 
     useEffect(() => {
         setIsPanelFocused(isFocus)
@@ -44,293 +44,240 @@ export const Import = () => {
 
     useEffect(() => {
         // automatically sets the export path same as import path when you first select import path to not have to select twice for the same dir
-        if (exportPath.length < 1) {
+        if (exportPath === defaultFolderPath) {
             setExportPath(importPath)
         }
     }, [importPath])
 
-    const getTruncatedString = logDecorator((maxLength, text) => {
-        try {
-            const actualLength = maxLength - 3
-            const textLength = text.length
-            if (textLength > actualLength) {
-                return "..." + text.slice(textLength - actualLength, textLength)
-            } else {
-                return "..." + text
-            }
-        } catch (e) {
-            showAlert("Function Truncated string")
-            showAlert(e)
+    const getTruncatedString = logDecorator(function getTruncatedString(maxLength, text) {
+
+        const actualLength = maxLength - 3
+        const textLength = text.length
+        if (textLength > actualLength) {
+            return "..." + text.slice(textLength - actualLength, textLength)
+        } else {
+            return "..." + text
         }
+
     })
-    const getFolder = logDecorator(async (setter) => {
-        try {
-            console.log("Getting folder")
-            dispatch(setIsFocused(false))
-            const folder = await fs.getFolder();
-            dispatch(setIsFocused(true))
-            if (folder == null) {
-                return
-            }
-            console.log(`Path to folder: ${fs.getNativePath(folder)}`)
-            setter(await getTruncatedString(40, folder.nativePath))
-            return folder
-        } catch(e) {
-            showAlert("Function get folder")
-            showAlert(e)
+    const getFolder = logDecorator(async function getFolder(setter)  {
+        console.log("Getting folder")
+        dispatch(setIsFocused(false))
+        const folder = await fs.getFolder();
+        dispatch(setIsFocused(true))
+        if (folder == null) {
+            return
         }
+        console.log(`Path to folder: ${fs.getNativePath(folder)}`)
+        setter(await getTruncatedString(40, folder.nativePath))
+        return folder
     })
 
-    const getFiles = logDecorator(async (setter) => {
-        try {
-            console.log("Getting files")
-            const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
-            dispatch(setIsFocused(false))
-            const files = await fs.getFileForOpening({allowMultiple: true, types: allowedFileExtensions})
-            dispatch(setIsFocused(true))
-            if (files.length < 1) {
-                return
-            }
-            const filteredFiles = files.filter((file)=> {
-                const fileName = file.name
-                const extension = fileName.substring(fileName.indexOf(".") + 1)
-                return allowedFileExtensions.includes(extension);
-            })
-            if (filteredFiles.length < 1) {
-                return
-            }
-            console.log(filteredFiles)
-            const filePath = files[0].nativePath
-            const folder= filePath.substring(0,filePath.lastIndexOf(pathDelimiter))
-            setter(await getTruncatedString(40, folder))
-            dispatch(setImportFolder(folder))
-            if (directories.exportDir.length < 1) {
-                dispatch(setExportFolder(folder))
-            }
-            return files
-        } catch(e) {
-            showAlert("Function get files")
-            showAlert(e)
+    const getFiles = logDecorator(async function getFiles (setter)  {
+
+        console.log("Getting files")
+        const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
+        dispatch(setIsFocused(false))
+        const files = await fs.getFileForOpening({allowMultiple: true, types: allowedFileExtensions})
+        dispatch(setIsFocused(true))
+        if (files.length < 1) {
+            return
         }
+        const filteredFiles = files.filter((file)=> {
+            const fileName = file.name
+            const extension = fileName.substring(fileName.indexOf(".") + 1)
+            return allowedFileExtensions.includes(extension);
+        })
+        if (filteredFiles.length < 1) {
+            return
+        }
+        console.log(filteredFiles)
+        const filePath = files[0].nativePath
+        const folder= filePath.substring(0,filePath.lastIndexOf(PATH_DELIMITER))
+        setter(await getTruncatedString(40, folder))
+        dispatch(setImportFolder(folder))
+        if (directories.exportDir.length < 1) {
+            dispatch(setExportFolder(folder))
+        }
+        return files
     })
 
-    const getImportFiles = logDecorator(async (setter) => {
-        try {
-            console.log("Import folder")
-            const files = await getFiles(setter)
+    const getImportFiles = logDecorator(async function getImportFiles (setter)  {
 
-            if (files === undefined) {
-                return
-            }
-            const allFiles = files.filter(entry => {
-                const entryName = entry.name
-                return entry.isFile && entryName.substring(entryName.length-3) != "ini"
-            })
-            dispatch(setFiles(allFiles.map((file, index) => {
-                return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
-            })))
-        } catch(e) {
-            showAlert("Function get Import folder")
-            showAlert(e)
+        console.log("Import folder")
+        const files = await getFiles(setter)
+
+        if (files === undefined) {
+            return
         }
+        const allFiles = files.filter(entry => {
+            const entryName = entry.name
+            return entry.isFile && entryName.substring(entryName.length-3) != "ini"
+        })
+        dispatch(setFiles(allFiles.map((file, index) => {
+            return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
+        })))
     })
 
-    const getExportFolder = logDecorator(async (setter) => {
-        try {
-            console.log("Export folder")
-            const folder = await getFolder(setter)
+    const getExportFolder = logDecorator(async function getExportFolder(setter)  {
 
-            if (folder === undefined) {
-                return
-            }
+        console.log("Export folder")
+        const folder = await getFolder(setter)
 
-            dispatch(setExportFolder(folder.nativePath)) // sets to global variable
-        } catch(e) {
-            showAlert("Function get export folder")
-            showAlert(e)
+        if (folder === undefined) {
+            return
         }
+
+        dispatch(setExportFolder(folder.nativePath)) // sets to global variable
     })
 
-    const handleExportCheck = logDecorator(() => {
-        try {
-            const newExportChecked = !isExportChecked;
-            setIsExportChecked(newExportChecked)
-            console.log(`Export switched to: ${newExportChecked}`)
-            dispatch(setShouldExport(newExportChecked))
-        } catch (e) {
-            showAlert("Function handle Export check")
-            showAlert(e)
-        }
+    const handleExportCheck = logDecorator(function handleExportCheck ()  {
+
+        const newExportChecked = !isExportChecked;
+        setIsExportChecked(newExportChecked)
+        console.log(`Export switched to: ${newExportChecked}`)
+        dispatch(setShouldExport(newExportChecked))
+
     })
 
-    const getAllEntries = (entriesUrl) => {
+    const getAllEntries = logDecorator(function getAllEntries (entriesUrl)  {
         const promises = entriesUrl.map(async (item) => {
             return await fs.getEntryWithUrl(item)
         })
         return Promise.all(promises)
-    }
-    const convertFiles = logDecorator(async (extension, folder) => {
+    })
+
+    const convertFiles = logDecorator(async function convertFiles (extension, folder)  {
         console.log("Converting files")
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
-        try {
-            if (folder.length < 1 ) {
-                alert("No folder selected")
-                return
-            }
-            if (extension.length < 1) {
-                alert("No extension selected")
-                return
-            }
-            await closeConvertDialog()
-            const folderEntry = await fs.getEntryWithUrl(folder)
-            const filenames = dirFiles.map((item)=> {
-                return item.filename
-            })
-            const entries = await getAllEntries(filenames)
-            const filteredEntries = entries.filter((file) => {
-                return file.isFile && file.name.substring(file.name.length -3) != "ini"
-            })
-            if (filteredEntries.length < 1) {
-                alert("No Files were selected")
-                return
-            }
-            // Main conversion functionality (opening, saving, closing)
-            for (let i = 0; i < filteredEntries.length; i++) {
-                await openFile(filteredEntries[i])
-                await exportFile(extension, folderEntry)
-                await closeCurrentFile()
-            }
-        } catch (e) {
-            showAlert("Function convert files")
-            showAlert(e)
+
+        if (folder.length < 1 ) {
+            alert("No folder selected")
+            return
         }
+        if (extension.length < 1) {
+            alert("No extension selected")
+            return
+        }
+        await closeConvertDialog()
+        const folderEntry = await fs.getEntryWithUrl(folder)
+        const filenames = dirFiles.map((item)=> {
+            return item.filename
+        })
+        const entries = await getAllEntries(filenames)
+        const filteredEntries = entries.filter((file) => {
+            return file.isFile && file.name.substring(file.name.length -3) != "ini"
+        })
+        if (filteredEntries.length < 1) {
+            alert("No Files were selected")
+            return
+        }
+        // Main conversion functionality (opening, saving, closing)
+        for (let i = 0; i < filteredEntries.length; i++) {
+            await openFile(filteredEntries[i])
+            await exportFile(extension, folderEntry)
+            await closeCurrentFile()
+        }
+
     })
-    const closeConvertDialog = logDecorator(() => {
-        try {
-            convertDialog.close()
-        } catch(e) {
-            showAlert("Function close convert dialog")
-            showAlert(e)
-        }
+    const closeConvertDialog = logDecorator(function closeConvertDialog ()  {
+
+        convertDialog.close()
     })
 
-    const openConvertDialog = logDecorator(async () => {
-        try {
-            if (!convertDialog) {
-                convertDialog = document.createElement("dialog")
-                convertDialog.style.padding = "1rem"
+    const openConvertDialog = logDecorator(async function openConvertDialog ()  {
 
-                const root = createRoot(convertDialog)
-                root.render(<ConvertModal dialog={convertDialog} handleClose={closeConvertDialog} convert={convertFiles}/>)
-            }
-            document.body.appendChild(convertDialog)
+        if (!convertDialog) {
+            convertDialog = document.createElement("dialog")
+            convertDialog.style.padding = "1rem"
 
-            convertDialog.onclose = () => {
-                convertDialog.remove()
-                convertDialog = null
-            }
-
-            await convertDialog.uxpShowModal({
-                title: "Convert project",
-            })
-        } catch(e) {
-            showAlert("Function open convert dialog")
-            showAlert(e)
+            const root = createRoot(convertDialog)
+            root.render(<ConvertModal dialog={convertDialog} handleClose={closeConvertDialog} convert={convertFiles}/>)
         }
+        document.body.appendChild(convertDialog)
+
+        convertDialog.onclose = () => {
+            convertDialog.remove()
+            convertDialog = null
+        }
+
+        await convertDialog.uxpShowModal({
+            title: "Convert project",
+        })
     })
 
-    const openFile = logDecorator(async (entry) => {
-        try {
-            await core.executeAsModal(async () => {await app.open(entry)})
-        } catch(e) {
-            showAlert("function open file")
-            showAlert(e)
-        }
+    const openFile = logDecorator(async function openFile (entry)  {
+
+        await core.executeAsModal(async () => {await app.open(entry)})
     })
 
-    const exportFile = logDecorator(async (extension, folder) => {
-        try {
-            switch (extension) {
-                case "png":
-                    // Export into png function
-                    console.log("png conversion")
-                    await savePng(folder)
-                    break
-                case "jpg":
-                    // export into jpg function
-                    console.log("jpg conversion")
-                    await saveJpg(folder)
-                    break
-                default:
-                    console.log("Unknown extension")
-                    break
-            }
-        } catch(e) {
-            showAlert("Function export file")
-            showAlert(e)
+    const exportFile = logDecorator(async function exportFile (extension, folder)  {
+
+        switch (extension) {
+            case "png":
+                // Export into png function
+                console.log("png conversion")
+                await savePng(folder)
+                break
+            case "jpg":
+                // export into jpg function
+                console.log("jpg conversion")
+                await saveJpg(folder)
+                break
+            default:
+                console.log("Unknown extension")
+                break
         }
     })
 
-    const savePng = logDecorator(async (folder) => {
+    const savePng = logDecorator(async function savePng (folder)  {
         // put png options here
         const pngOptions = {interlaced: false}
-        try {
-            const doc = app.activeDocument
-            const fileName = doc.name.replace(/\.\w+$/, "")
-            const entry = await folder.createFile(`${fileName}.png`, {overwrite: true})
-            await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
-        } catch (e) {
-            showAlert("Function save png")
-            showAlert(e)
-        }
+
+        const doc = app.activeDocument
+        const fileName = doc.name.replace(/\.\w+$/, "")
+        const entry = await folder.createFile(`${fileName}.png`, {overwrite: true})
+        await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
+
     })
 
-    const saveJpg = logDecorator(async (folder) => {
+    const saveJpg = logDecorator(async function saveJpg (folder)  {
         // put jpg options here
         const jpgOptions = {quality: 12}
-        try {
-            const doc = app.activeDocument
-            const fileName = doc.name.replace(/\.\w+$/, "")
-            const entry = await folder.createFile(`${fileName}.jpg`, {overwrite: true})
-            await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
-        } catch (e) {
-            showAlert("Function save jpg")
-            showAlert(e)
-        }
+
+        const doc = app.activeDocument
+        const fileName = doc.name.replace(/\.\w+$/, "")
+        const entry = await folder.createFile(`${fileName}.jpg`, {overwrite: true})
+        await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
+
     })
 
-    const closeCurrentFile = logDecorator(async () => {
-        try {
-            const doc = app.activeDocument
-            console.log(doc)
-            await core.executeAsModal(async () => {await doc.close()})
+    const closeCurrentFile = logDecorator(async function closeCurrentFile ()  {
 
-        } catch (e) {
-            showAlert("Function close current file")
-            showAlert(e)
-        }
+        const doc = app.activeDocument
+        console.log(doc)
+        await core.executeAsModal(async () => {await doc.close()})
+
+
     })
 
     // todo Use this method everytime where setting paths. After setting, call it using asyncLogDecorator
     const getPathValue =  (currentPath) => {
-       // Returns a placeholder value for folders if the current path is empty
-        try {
-            if (currentPath.length < 1) {
-                return "Path to folder"
-            } else {
-                return currentPath
-            }
-        } catch (e) {
-            showAlert("Function getPathValue")
-            showAlert(e)
+        // Returns a placeholder value for folders if the current path is empty
+
+        if (currentPath.length < 1) {
+            return "Path to folder"
+        } else {
+            return currentPath
         }
+
     }
     return <div id={"import"}>
         {/*Importing*/}
         <Section sectionName={"Import"} isTransparent={true}>
             <sp-heading size={"S"} class={"heading-style"}>Choose import directory</sp-heading>
-            <sp-body size={"S"}>{getPathValue(importPath)}</sp-body>
+            <sp-body size={"S"}>{importPath}</sp-body>
             <ActionButton classHandle={"button-100"}  clickHandler={() => getImportFiles(setImportPath)} isDisabled={!isPanelFocused}>Choose Files</ActionButton>
         </Section>
         {/*Exporting*/}
@@ -338,7 +285,7 @@ export const Import = () => {
             <div id={"export-details"}>
                 <div id={"export-psd"}>
                     <sp-heading size={"S"} class={"heading-style"}>Choose the export folder</sp-heading>
-                    <sp-body size={"S"}>{isExportChecked ? getPathValue(exportPath) : "Disabled"}</sp-body>
+                    <sp-body size={"S"}>{isExportChecked ? exportPath : "Disabled"}</sp-body>
                     <div class={"fit-row-style"}>
                         {isExportChecked ?
                             <ActionButton classHandle={"width-50"} clickHandler={handleExportCheck} isDisabled={!isPanelFocused}>Disable</ActionButton>
@@ -351,7 +298,7 @@ export const Import = () => {
             </div>
         </Section>
                 <div id={"export-other"} style={{marginTop: "10px"}}>
-                    <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={openConvertDialog} isDisabled={!isPanelFocused}>Convert</ActionButton>
+                    <HighlightButton classHandle={"button-100"} clickHandler={openConvertDialog} isDisabled={!isPanelFocused}>Convert</HighlightButton>
                 </div>
     </div>
 }

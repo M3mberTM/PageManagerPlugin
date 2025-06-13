@@ -1,6 +1,5 @@
 import React from 'react';
 import "./CommonStyles.css";
-import colorCombos from "../helpers/ColorCombos";
 export const Section = ({children, isTransparent, bgColor, headingColor, sectionName}) => {
     const borderRadius = "3px";
 
@@ -15,7 +14,7 @@ export const Section = ({children, isTransparent, bgColor, headingColor, section
     }
 
     const sectionHeading = {
-        backgroundColor: isTransparent ? colorCombos.grey.heading : headingColor,
+        backgroundColor: isTransparent ? "#444444" : headingColor,
         borderRadius: borderRadius,
         display: "inline-block",
         borderTopRightRadius: "0px",

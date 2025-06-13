@@ -5,14 +5,16 @@ import {useState, useEffect} from "react";
 import {Section} from "../components/Section";
 import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
-import {createRoot} from "react-dom";
+import {createRoot} from "react-dom/client";
 import {GuideModal} from "../components/GuideModal";
-import {logToFile} from "../helpers/Logger";
+import {logDecorator} from "../helpers/Logger";
 import {createDataFolderStruct, showAlert} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
+import {storage} from 'uxp';
+import {HighlightButton} from "../components/HighlightButton";
 
-const fs = require('uxp').storage.localFileSystem;
-
+const fs = storage.localFileSystem;
+// todo remove all try and catch
 export const Naming = () => {
     const exampleFilename = "FileName001"
     const exampleFileNumber = 1
@@ -42,7 +44,7 @@ export const Naming = () => {
         createDataFolderStruct().then()
     }, [])
 
-    const addLeadingZeros = async (num, size) => {
+    const addLeadingZeros = logDecorator(async function addLeadingZeros(num, size)  {
         try {
             num = num.toString();
             while (num.length < size) num = "0" + num;
@@ -51,9 +53,9 @@ export const Naming = () => {
             showAlert("Function add leading zeros")
             showAlert(e)
         }
-    }
+    })
 
-    const applyTemplate = async (inputName) => {
+    const applyTemplate = logDecorator(async function applyTemplate(inputName)  {
         try {
             if (inputName.length < 1) {
                 alert("Template is empty")
@@ -76,18 +78,18 @@ export const Naming = () => {
             showAlert("Function handle Input change")
             showAlert(e)
         }
-    }
+    })
 
-    const closeGuideDialog = async () => {
+    const closeGuideDialog = logDecorator(async function closeGuideDialog()  {
         try {
             guideDialog.close()
         } catch (e) {
             showAlert("Function close guide dialog")
             showAlert(e)
         }
-    }
+    })
 
-    const openGuideDialog = async () => {
+    const openGuideDialog = logDecorator(async function openGuideDialog()  {
         try {
             // WTF is this even. There has to be a better way of doing this but I am too lazy to look for the information
             if (!guideDialog) {
@@ -111,9 +113,9 @@ export const Naming = () => {
             showAlert("Function open guide dialog")
             showAlert(e)
         }
-    }
+    })
 
-    const getPresetFileContents = async () => {
+    const getPresetFileContents = logDecorator(async function getPresetFileContents()  {
         try {
             const dataFolder = await fs.getDataFolder()
             if (await doesPresetFileExist(presetFileName)) {
@@ -130,9 +132,9 @@ export const Naming = () => {
             showAlert("Function load preset")
             showAlert(e)
         }
-    }
+    })
 
-    const doesPresetFileExist = async (fileName) => {
+    const doesPresetFileExist = logDecorator(async function doesPresetFileExist(fileName)  {
         try {
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(fileName)
@@ -140,9 +142,9 @@ export const Naming = () => {
         } catch (e) {
             return false
         }
-    }
+    })
 
-    const savePreset = async () => {
+    const savePreset = logDecorator(async function savePreset()  {
         try {
             const inputVal = document.getElementById("template-input").value
             if (inputVal.length < 1) {
@@ -156,9 +158,9 @@ export const Naming = () => {
             showAlert("Function save preset")
             showAlert(e)
         }
-    }
+    })
 
-    const writeToPresetFile = async (content) => {
+    const writeToPresetFile = logDecorator(async function writeToPresetFile(content)  {
         try {
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(presetFileName)
@@ -168,9 +170,9 @@ export const Naming = () => {
             showAlert("Function add to preset file")
             showAlert(e)
         }
-    }
+    })
 
-    const deletePreset = async (template) => {
+    const deletePreset = logDecorator(async function deletePreset(template)  {
         try {
             const filteredPresets = presets.filter((item) => {
                 return item != template
@@ -183,9 +185,9 @@ export const Naming = () => {
             showAlert("Function deletePreset")
             showAlert(e)
         }
-    }
+    })
 
-    const loadPreset =  async (template) => {
+    const loadPreset =  logDecorator(async function loadPreset(template)  {
         try {
             if (template == undefined || template == null) {
                 return
@@ -198,7 +200,7 @@ export const Naming = () => {
             showAlert("Function loadPreset")
             showAlert(e)
         }
-    }
+    })
 
 
     return <div id={"naming"}>
@@ -211,7 +213,7 @@ export const Naming = () => {
             }} isDisabled={!isPanelFocused}>Apply
             </ActionButton>
             <ActionButton classHandle={"button-100"} clickHandler={savePreset} isDisabled={!isPanelFocused}>Save preset</ActionButton>
-            <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={openGuideDialog} isDisabled={!isPanelFocused}>Guide</ActionButton>
+            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={openGuideDialog} isDisabled={!isPanelFocused}>Guide</HighlightButton>
         </Section>
 
         <Section isTransparent={true} sectionName={"Presets"}>
@@ -226,10 +228,10 @@ export const Naming = () => {
                     </sp-picker>
                     <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isPanelFocused}>Delete
                     </ActionButton>
-                    <ActionButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
+                    <HighlightButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
                         loadPreset(document.getElementById("saved-templates").value)
                     }} isDisabled={!isPanelFocused}>Load
-                    </ActionButton>
+                    </HighlightButton>
                 </div>
             </div>
         </Section>

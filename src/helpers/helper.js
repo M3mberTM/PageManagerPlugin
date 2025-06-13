@@ -1,17 +1,11 @@
 import {storage} from 'uxp';
-import os from "os";
+import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER} from "./constants";
 
 const fs = storage.localFileSystem;
-const PATH_DELIMITER = os.platform() == "win32" ? "\\" : "/";
-
-const LOG_FOLDER = "logs"
-const STORAGE_FOLDER = "storage"
-const SETTINGS_FOLDER = "settings"
 
 const DEFAULT_PRESET_VAL = {presets: []}
 const DEFAULT_PROJECTS_VAL = {}
 const DEFAULT_SETTINGS_VAL = {saveOnOpen: false, rememberState: false}
-const LOG = true;
 
 export const showAlert = (message) => {
     if (LOG) {

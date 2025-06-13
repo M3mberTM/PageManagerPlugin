@@ -10,14 +10,16 @@ import {OverwriteModal} from "../components/OverwriteModal";
 import {ProjectModal} from "../components/ProjectModal";
 import {useDispatch} from "react-redux";
 import {setFiles} from "../reducers/fileSlice";
-import {logToFile} from "../helpers/Logger";
+import {logDecorator, logToFile} from "../helpers/Logger";
 import {app} from "photoshop";
 import {core} from "photoshop";
 import {storage} from 'uxp';
 import {showAlert, entryExists} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
+import {HighlightButton} from "../components/HighlightButton";
 
 const fs = storage.localFileSystem;
+// todo remove all try and catch
 
 export const Export = () => {
     // states
@@ -88,16 +90,16 @@ export const Export = () => {
     }, [dirs])
 
     // automatically scrolls to the current file opened in the file list
-    const elementScrollToView = () => {
+    const elementScrollToView = logDecorator(function elementScrollToView()  {
         try {
             scrollRef.current.scrollIntoView({behavior: 'smooth'})
         } catch (e) {
             showAlert("Function elementScrollToView")
             showAlert(e)
         }
-    }
+    })
 
-    const openFile = async (pageIndex) => {
+    const openFile = logDecorator(async function openFile(pageIndex)  {
         try {
             const app = window.require("photoshop").app
             let fileEntry = null
@@ -112,9 +114,9 @@ export const Export = () => {
             showAlert("Function openFile")
             showAlert(e)
         }
-    }
+    })
 
-    const openNextFile = async (pageNum) => {
+    const openNextFile = logDecorator(async function openNextFile(pageNum)  {
         try {
             // current function changes the state in photoshop, therefore it is called using executeAsModal
             await core.executeAsModal(() => openFile(pageNum))
@@ -122,9 +124,9 @@ export const Export = () => {
             showAlert("Function openNextFile")
             showAlert(e)
         }
-    }
+    })
 
-    const goToFile = async (pageIndex) => {
+    const goToFile = logDecorator(async function goToFile(pageIndex)  {
         try {
             const currentDoc = app.activeDocument
             setCurrentPageIndex(pageIndex)
@@ -137,9 +139,9 @@ export const Export = () => {
             showAlert("Function goToFile")
             showAlert(e)
         }
-    }
+    })
 
-    const goToNextFile = async (isForward) => {
+    const goToNextFile = logDecorator(async function goToNextFile(isForward)  {
         if (!isLoadingFile.current) {
             isLoadingFile.current = true
             try {
@@ -171,26 +173,26 @@ export const Export = () => {
                         await core.executeAsModal(() => closeFile(currentDoc))
                     }
                 }
-                elementScrollToView()
+                elementScrollToView().then()
             } catch (e) {
                 showAlert("Function goToNextFile")
                 showAlert(e)
             }
             isLoadingFile.current = false
         }
-    }
+    })
 
-    const closeFile = async (document) => {
+    const closeFile = logDecorator(async function closeFile(document)  {
         try {
             await document.close()
         } catch (e) {
             showAlert("Function closeFile")
             showAlert(e)
         }
-    }
+    })
 
     // Changes the file status to complete if not completed and vice versa
-    const changeFileStatus = async (index) => {
+    const changeFileStatus = logDecorator(async function changeFileStatus(index)  {
         try {
             const file = files[index]
             const newFile = {...file, isDone: !file.isDone}
@@ -212,9 +214,9 @@ export const Export = () => {
             showAlert("Function changeFileStatus")
             showAlert(e)
         }
-    }
+    })
 
-    const openStartingFile = async () => {
+    const openStartingFile = logDecorator(async function openStartingFile()  {
         try {
             if (files.length > 0) {
                 await openNextFile(0)
@@ -227,19 +229,19 @@ export const Export = () => {
             showAlert("Function openStartingFile")
             showAlert(e)
         }
-    }
+    })
 
-    const addLeadingZeros = async (num, size) => {
+    const addLeadingZeros = logDecorator( function addLeadingZeros(num, size)  {
         try {
             return String(num).padStart(size, '0')
         } catch (e) {
             showAlert("Function aadLeadingZeros")
             showAlert(e)
         }
-    }
+    })
 
     // gets the page name according to the template given in Naming panel
-    const getPageName = async (currentPage) => {
+    const getPageName = logDecorator(async function getPageName(currentPage)  {
         try {
             if (namingTemplate.length < 1) {
                 const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
@@ -263,9 +265,9 @@ export const Export = () => {
             showAlert("Function getPageName")
             showAlert(e)
         }
-    }
+    })
 
-    const saveFile = async () => {
+    const saveFile = logDecorator(async function saveFile()  {
         try {
             const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
             const saveName = `${currentPageName}.psd`
@@ -288,9 +290,9 @@ export const Export = () => {
             showAlert("Function saveFile")
             showAlert(e)
         }
-    }
+    })
 
-    const setNewPageNum = async (newPageNum) => {
+    const setNewPageNum = logDecorator(async function setNewPageNum(newPageNum)  {
         // get page number selected.
         // get difference of new number to the original. Update all other pages by this amount as well to keep consistency
         try {
@@ -318,28 +320,28 @@ export const Export = () => {
             showAlert("Function setNewPageNum")
             showAlert(e)
         }
-    }
+    })
 
-    const closeOverwriteDialog = async () => {
+    const closeOverwriteDialog = logDecorator(async function closeOverwriteDialog()  {
         try {
             overwriteAlert.close()
         } catch (e) {
             showAlert("Function close overwrite dialog")
             showAlert(e)
         }
-    }
+    })
 
 
-    const closeProjectDialog = async () => {
+    const closeProjectDialog = logDecorator(async function closeProjectDialog()  {
         try {
             projectDialog.close()
         } catch (e) {
             showAlert("Function close Project dialog")
             showAlert(e)
         }
-    }
+    })
 
-    const overwriteCheck = async () => {
+    const overwriteCheck = logDecorator(async function overwriteCheck()  {
         try {
             if (directories.exportDir.length < 1) {
                 alert("No export directory is chosen")
@@ -361,8 +363,8 @@ export const Export = () => {
             showAlert("Function overwriteCheck")
             showAlert(e)
         }
-    }
-    const overwriteFile = async () => {
+    })
+    const overwriteFile = logDecorator(async function overwriteFile()  {
         try {
             await closeOverwriteDialog()
             await saveFile()
@@ -370,10 +372,10 @@ export const Export = () => {
             showAlert("Function overwriteFile")
             showAlert(e)
         }
-    }
+    })
 
     // if file is about to be overwritten, show overwrite dialog because uxp doesn't support overwrite dialog by default
-    const openOverwriteDialog = async () => {
+    const openOverwriteDialog = logDecorator(async function openOverwriteDialog()  {
         try {
             if (!overwriteAlert) {
                 overwriteAlert = document.createElement("dialog")
@@ -397,10 +399,10 @@ export const Export = () => {
             showAlert("Function openOverwriteDialog")
             showAlert(e)
         }
-    }
+    })
 
 
-    const openProjectDialog = async () => {
+    const openProjectDialog = logDecorator(async function openProjectDialog()  {
         try {
             if (!projectDialog) {
                 projectDialog = document.createElement("dialog")
@@ -424,9 +426,9 @@ export const Export = () => {
             showAlert("Function openOverwriteDialog")
             showAlert(e)
         }
-    }
+    })
 
-    const savePSD = async (entry) => {
+    const savePSD = logDecorator(async function savePSD(entry)  {
         try {
             console.log("Saving as psd", entry)
             const doc = app.activeDocument
@@ -437,9 +439,9 @@ export const Export = () => {
             showAlert(e)
             return false
         }
-    }
+    })
 
-    const getPresetFileContents = async () => {
+    const getPresetFileContents = logDecorator(async function getPresetFileContents()  {
         try {
             const dataFolder = await fs.getDataFolder()
             if (await entryExists(`${dataFolder.nativePath}\\${presetFileName}`)) {
@@ -458,8 +460,8 @@ export const Export = () => {
             showAlert("Function load preset")
             showAlert(e)
         }
-    }
-    const writeToPresetFile = async (content) => {
+    })
+    const writeToPresetFile = logDecorator(async function writeToPresetFile(content)  {
         try {
             const dataFolder = await fs.getDataFolder()
             const file = await dataFolder.getEntry(presetFileName)
@@ -469,9 +471,9 @@ export const Export = () => {
             showAlert("Function add to preset file")
             showAlert(e)
         }
-    }
+    })
 
-    const removeProject = async (inputVal) => {
+    const removeProject = logDecorator(async function removeProject(inputVal)  {
         try {
             const newProjects = {}
             for (let i = 0; i < presets.length; i++) {
@@ -490,9 +492,9 @@ export const Export = () => {
             showAlert("Function remove Project")
             showAlert(e)
         }
-    }
+    })
 
-    const saveProject = async (inputVal) => {
+    const saveProject = logDecorator(async function saveProject(inputVal)  {
         try {
             const newProjects = await getPresetFileContents()
             newProjects[inputVal] = files
@@ -504,9 +506,9 @@ export const Export = () => {
             showAlert("Function save Project")
             showAlert(e)
         }
-    }
+    })
 
-    const loadProject = async (projectName) => {
+    const loadProject = logDecorator(async function loadProject(projectName)  {
         try {
             const projectContents = await getPresetFileContents()
             const selectedProject = projectContents[projectName]
@@ -516,7 +518,7 @@ export const Export = () => {
             showAlert("Function loadProject")
             showAlert(e)
         }
-    }
+    })
 
     return <div id={"export"}>
         {/*File showcase*/}
@@ -535,10 +537,10 @@ export const Export = () => {
                 {isStart &&
                     <div>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{"<"}</ActionButton>
-                        <ActionButton classHandle={"unimportant-button"} style={{width: "60%"}} clickHandler={() => {
+                        <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isPanelFocused} clickHandler={() => {
                             openStartingFile()
                         }}>Start
-                        </ActionButton>
+                        </HighlightButton>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{">"}</ActionButton>
                     </div>
                 }
@@ -558,10 +560,10 @@ export const Export = () => {
                 }
             </div>
                 <div class={"fit-row-style"}>
-                    <ActionButton classHandle={"unimportant-button button-100"} clickHandler={() => {
+                    <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
                         overwriteCheck()
                     }} isDisabled={isStart || !isPanelFocused}>Save
-                    </ActionButton>
+                    </HighlightButton>
                 </div>
         </Section>
 
@@ -569,9 +571,9 @@ export const Export = () => {
             <sp-textfield class={"button-100"} id={"page-number-input"}>
                 <sp-label slot={"label"} isrequired={"true"}>Manual page number</sp-label>
             </sp-textfield>
-                <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
+                <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
                     setNewPageNum(document.getElementById("page-number-input").value)
-                }} isDisabled={isStart || !isPanelFocused}>Set</ActionButton>
+                }} isDisabled={isStart || !isPanelFocused}>Set</HighlightButton>
             <sp-heading size={"XS"}>Current file name</sp-heading>
             <sp-heading size={"XXS"}>{currentPageName}</sp-heading>
         </Section>
@@ -591,10 +593,10 @@ export const Export = () => {
                 </ActionButton>
                 <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isPanelFocused}>Load</ActionButton>
             </div>
-            <ActionButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
+            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
                 openProjectDialog()
             }} isDisabled={!isPanelFocused}>Save
-            </ActionButton>
+            </HighlightButton>
         </Section>
 
     </div>
