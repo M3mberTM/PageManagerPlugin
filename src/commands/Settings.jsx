@@ -9,10 +9,12 @@ export const Settings = ({dialog}) => {
         <div>
             <sp-heading>Page Manager Settings</sp-heading>
             <sp-divider size="large"></sp-divider>
-            <SettingOption>Test option</SettingOption>
+            <div style={{marginTop: "10px"}}>
+                <SettingOption>Test option</SettingOption>
+            </div>
+
             <sp-button-group style={{marginTop: "10px"}}>
-                <sp-button tabindex={0} variant="secondary" quiet="quiet" onClick={() => dialog.close("reasonCanceled")}>Cancel</sp-button>
-                <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close("ok")}>OK</sp-button>
+                <sp-button tabindex={0} autofocus="autofocus" variant="primary" style={{marginLeft: "auto"}} onClick={() => dialog.close("ok")}>Close</sp-button>
             </sp-button-group>
         </div>
     );

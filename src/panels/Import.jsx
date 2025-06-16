@@ -262,17 +262,6 @@ export const Import = () => {
 
     })
 
-    // todo Use this method everytime where setting paths. After setting, call it using asyncLogDecorator
-    const getPathValue =  (currentPath) => {
-        // Returns a placeholder value for folders if the current path is empty
-
-        if (currentPath.length < 1) {
-            return "Path to folder"
-        } else {
-            return currentPath
-        }
-
-    }
     return <div id={"import"}>
         {/*Importing*/}
         <Section sectionName={"Import"} isTransparent={true}>
