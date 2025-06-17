@@ -80,6 +80,14 @@ const populateDataFolders = async () => {
     }
 }
 
+export const addLeadingZeros = (num, size) =>  {
+
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+
+}
+
 export const writeToFile = async (filePath, content) => {
     try {
         const fileEntry = await fs.getEntryWithUrl(filePath)

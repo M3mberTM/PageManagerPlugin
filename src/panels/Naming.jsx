@@ -8,10 +8,11 @@ import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
 import {GuideModal} from "../components/GuideModal";
 import {logDecorator} from "../helpers/Logger";
-import {createDataFolderStruct, showAlert} from "../helpers/helper";
+import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 import {storage} from 'uxp';
 import {HighlightButton} from "../components/HighlightButton";
+import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
@@ -24,7 +25,7 @@ export const Naming = () => {
     // other helpful vars
     const dispatch = useDispatch()
     let guideDialog = null;
-    const presetFileName = 'presets.txt'
+    const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`
     // selectors
     const isFocus = useSelector(state => state.focusSlice.value)
 
@@ -35,24 +36,17 @@ export const Naming = () => {
     useEffect( () => {
         // load the preset file saved before starting anything
         const effectPresetContents = async () => {
-            const presetContents = await getPresetFileContents()
-            console.log("loaded presets", presetContents.presets)
-            setPresets(presetContents.presets)
+            const presetContents = await loadPresets()
+            console.log("loaded presets", presetContents)
+            setPresets(presetContents)
         }
-        effectPresetContents().then()
-        createDataFolderStruct().then()
+        createDataFolderStruct().then(() => {
+            effectPresetContents().then()
+        })
     }, [])
 
-    const addLeadingZeros = logDecorator(async function addLeadingZeros(num, size)  {
 
-        num = num.toString();
-        while (num.length < size) num = "0" + num;
-        return num;
-
-    })
-
-    const applyTemplate = logDecorator(async function applyTemplate(inputName)  {
-
+    const applyTemplate = logDecorator(function applyTemplate(inputName)  {
         if (inputName.length < 1) {
             alert("Template is empty")
             return
@@ -64,7 +58,7 @@ export const Naming = () => {
         while (leadingZerosPattern.test(leadingZerosAppend)) {
             const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
             const padLength = parseInt(match.substring(2, match.length - 1))
-            const paddedNum = await addLeadingZeros(exampleFileNumber, padLength)
+            const paddedNum = addLeadingZeros(exampleFileNumber, padLength)
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
 
@@ -100,75 +94,48 @@ export const Naming = () => {
 
     })
 
-    const getPresetFileContents = logDecorator(async function getPresetFileContents()  {
-
+    const loadPresets = logDecorator(async function loadPresets() {
         const dataFolder = await fs.getDataFolder()
-        if (await doesPresetFileExist(presetFileName)) {
-            const presetFile = await dataFolder.getEntry(presetFileName)
-            const fileContent = await presetFile.read()
-            return JSON.parse(fileContent)
-        } else {
-            const presetFile = await dataFolder.createFile(presetFileName)
-            const initialContent = {presets: []}
-            presetFile.write(JSON.stringify(initialContent))
-            return initialContent
-        }
-
+        const dataFolderPath = dataFolder.nativePath
+        const presetContents = await readFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`)
+        return JSON.parse(presetContents).presets
     })
 
-    const doesPresetFileExist = logDecorator(async function doesPresetFileExist(fileName)  {
-        try {
-            const dataFolder = await fs.getDataFolder()
-            const file = await dataFolder.getEntry(fileName)
-            return true
-        } catch (e) {
-            return false
-        }
-    })
 
     const savePreset = logDecorator(async function savePreset()  {
-
         const inputVal = document.getElementById("template-input").value
         if (inputVal.length < 1) {
             alert("No preset was inputted")
             return
         }
+        const dataFolder = await fs.getDataFolder()
+        const dataFolderPath = dataFolder.nativePath
         const newPresets = presets.concat(inputVal)
         setPresets(newPresets)
-        await writeToPresetFile(JSON.stringify({presets: newPresets}))
-
-    })
-
-    const writeToPresetFile = logDecorator(async function writeToPresetFile(content)  {
-
-        const dataFolder = await fs.getDataFolder()
-        const file = await dataFolder.getEntry(presetFileName)
-        await file.write(content)
-        console.log('Successfully written new preset')
-
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newPresets))
     })
 
     const deletePreset = logDecorator(async function deletePreset(template)  {
-
         const filteredPresets = presets.filter((item) => {
-            return item != template
+            return item !== template
         })
         setPresets(filteredPresets)
-        await writeToPresetFile(JSON.stringify({presets: filteredPresets}))
+        const dataFolder = await fs.getDataFolder()
+        const dataFolderPath = dataFolder.nativePath
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(filteredPresets))
         // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
         document.getElementById("saved-templates").selectedIndex = -1
 
     })
 
-    const loadPreset =  logDecorator(async function loadPreset(template)  {
-
-        if (template == undefined || template == null) {
+    const applyPreset =  logDecorator(function applyPreset(template)  {
+        if (template === undefined || template == null) {
             return
         }
         if (template.length < 1) {
             return
         }
-        await applyTemplate(template)
+        applyTemplate(template).then()
 
     })
 
@@ -179,7 +146,7 @@ export const Naming = () => {
             <sp-heading size={"XXS"}>{shownName.length < 1 ? "FileName001" : shownName}</sp-heading>
             <sp-textfield class={"button-100"} id={"template-input"} placeholder={"Placeholder"}></sp-textfield>
             <ActionButton classHandle={"button-100"} clickHandler={() => {
-                applyTemplate(document.getElementById("template-input").value)
+                applyTemplate(document.getElementById("template-input").value).then()
             }} isDisabled={!isPanelFocused}>Apply
             </ActionButton>
             <ActionButton classHandle={"button-100"} clickHandler={savePreset} isDisabled={!isPanelFocused}>Save preset</ActionButton>
@@ -199,7 +166,7 @@ export const Naming = () => {
                     <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isPanelFocused}>Delete
                     </ActionButton>
                     <HighlightButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
-                        loadPreset(document.getElementById("saved-templates").value)
+                        applyPreset(document.getElementById("saved-templates").value).then()
                     }} isDisabled={!isPanelFocused}>Load
                     </HighlightButton>
                 </div>

@@ -59,6 +59,7 @@ export const Export = () => {
         setCurrentPageIndex(0)
         setPageNumber(0)
         setIsStart(true)
+        setCompletedNum(0)
     }, [dirFiles])
 
     // Updates the page name each time it is changed in the Naming panel
@@ -106,7 +107,6 @@ export const Export = () => {
     })
 
     const openNextFile = logDecorator(async function openNextFile(pageNum)  {
-
         // current function changes the state in photoshop, therefore it is called using executeAsModal
         await core.executeAsModal(() => openFile(pageNum))
 
@@ -163,13 +163,11 @@ export const Export = () => {
     })
 
     const closeFile = logDecorator(async function closeFile(document)  {
-
         await document.close()
-
     })
 
     // Changes the file status to complete if not completed and vice versa
-    const changeFileStatus = logDecorator(async function changeFileStatus(index)  {
+    const changeFileStatus = logDecorator(function changeFileStatus(index)  {
 
         const file = files[index]
         const newFile = {...file, isDone: !file.isDone}
@@ -191,7 +189,6 @@ export const Export = () => {
     })
 
     const openStartingFile = logDecorator(async function openStartingFile()  {
-
         if (files.length > 0) {
             await openNextFile(0)
             setIsStart(false)
@@ -202,14 +199,14 @@ export const Export = () => {
 
     })
 
-    const addLeadingZeros = logDecorator( function addLeadingZeros(num, size)  {
+    const addLeadingZeros = logDecorator(function addLeadingZeros(num, size)  {
 
         return String(num).padStart(size, '0')
 
     })
 
     // gets the page name according to the template given in Naming panel
-    const getPageName = logDecorator(async function getPageName(currentPage)  {
+    const getPageName = logDecorator(function getPageName(currentPage)  {
 
         if (namingTemplate.length < 1) {
             const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
@@ -223,7 +220,7 @@ export const Export = () => {
         while (leadingZerosPattern.test(leadingZerosAppend)) {
             const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
             const padLength = parseInt(match.substring(2, match.length - 1))
-            const paddedNum = await addLeadingZeros(currentPage.pageNumber, padLength)
+            const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
         const finalName = leadingZerosAppend.replace(/\.[\w\d]+$/, "")

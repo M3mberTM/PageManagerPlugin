@@ -4,7 +4,7 @@ import "./CommonStyles.css";
 export const GuideModal = ({dialog, handleClose}) => {
 
     return (
-        <div style={{width: "400px"}}>
+        <div style={{width: "600px"}}>
             <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
                 <sp-heading style={{marginTop: 0}}>Simple guide for Template making</sp-heading>
                 <sp-body>
