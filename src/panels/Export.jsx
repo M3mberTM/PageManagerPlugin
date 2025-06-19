@@ -79,6 +79,11 @@ export const Export = () => {
             console.log("loaded saved projects", projectContents)
             setProjects(projectContents)
         }
+        // todo figure out this shit. How to run only after the folders are populated
+        /* possible ways of doing so and still make it organized:
+        Make new component, which using dispatch notifies all the setup functions to start.
+        Question is, where to put it and load it?
+         */
         effectProjectContents().then()
     }, [])
 

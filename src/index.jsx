@@ -41,7 +41,7 @@ const exportController = new PanelController(() => <Provider store={store}><Expo
 entrypoints.setup({
     commands: {
         showAbout: aboutController,
-        settings: settingsController
+        settings: settingsController,
     },
     panels: {
         import: importController,
