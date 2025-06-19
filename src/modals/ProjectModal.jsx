@@ -1,7 +1,17 @@
 import React from "react";
-import "./CommonStyles.css";
+import "../components/CommonStyles.css";
 
-export const ProjectModal = ({dialog, handleClose, files, saveProject}) => {
+export const ProjectModal = ({dialog, files, saveProject}) => {
+
+    const validateAndSend = () => {
+        const input = document.getElementById("project-name").value
+        if  (input.length < 1) {
+            alert("No name was inputted")
+            return
+        }
+
+        saveProject(input)
+    }
 
     return (
         <div style={{width: "400px"}}>
@@ -23,8 +33,8 @@ export const ProjectModal = ({dialog, handleClose, files, saveProject}) => {
             </div>
             <br/>
             <div class={"right-div-align"}>
-                <sp-action-button onClick={handleClose}>Cancel</sp-action-button>
-                <sp-action-button onClick={() => {saveProject(document.getElementById("project-name").value)}}>Ok</sp-action-button>
+                <sp-action-button onClick={() => dialog.close()}>Cancel</sp-action-button>
+                <sp-action-button onClick={() => {validateAndSend()}}>Ok</sp-action-button>
             </div>
         </div>
     )

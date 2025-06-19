@@ -1,7 +1,9 @@
 import React from "react";
-import "./CommonStyles.css";
+import "../components/CommonStyles.css";
 
-export const OverwriteModal = ({dialog, handleClose, overwriteFile, fileToOverwriteName}) => {
+export const OverwriteModal = ({dialog, overwriteFile, fileToOverwriteName}) => {
+
+
 
     return (
         <div style={{width: "400px"}}>
@@ -13,7 +15,7 @@ export const OverwriteModal = ({dialog, handleClose, overwriteFile, fileToOverwr
             </div>
             <br/>
             <div class={"right-div-align"}>
-                <sp-action-button onClick={handleClose}>Cancel</sp-action-button>
+                <sp-action-button onClick={() => dialog.close()}>Cancel</sp-action-button>
                 <sp-action-button onClick={() => {overwriteFile()}}>Ok</sp-action-button>
             </div>
         </div>

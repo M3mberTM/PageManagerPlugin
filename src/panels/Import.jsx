@@ -7,7 +7,7 @@ import {setFiles} from "../reducers/fileSlice"
 import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
 import {setIsFocused} from "../reducers/focusSlice";
-import {ConvertModal} from "../components/ConvertModal";
+import {ConvertModal} from "../modals/ConvertModal";
 import {logDecorator} from "../helpers/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
@@ -77,7 +77,8 @@ export const Import = () => {
     const getFiles = logDecorator(async function getFiles (setter)  {
 
         console.log("Getting files")
-        const allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "*"])
+        let allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb"])
+        allowedFileExtensions = allowedFileExtensions.concat([allowedFileExtensions.join(";*.")])
         dispatch(setIsFocused(false))
         const files = await fs.getFileForOpening({allowMultiple: true, types: allowedFileExtensions})
         dispatch(setIsFocused(true))
@@ -153,15 +154,7 @@ export const Import = () => {
         console.log(`Extension: ${extension}`)
         console.log(`Folder: ${folder}`)
 
-        if (folder.length < 1 ) {
-            alert("No folder selected")
-            return
-        }
-        if (extension.length < 1) {
-            alert("No extension selected")
-            return
-        }
-        await closeConvertDialog()
+        convertDialog.close()
         const folderEntry = await fs.getEntryWithUrl(folder)
         const filenames = dirFiles.map((item)=> {
             return item.filename
@@ -170,10 +163,6 @@ export const Import = () => {
         const filteredEntries = entries.filter((file) => {
             return file.isFile && file.name.substring(file.name.length -3) != "ini"
         })
-        if (filteredEntries.length < 1) {
-            alert("No Files were selected")
-            return
-        }
         // Main conversion functionality (opening, saving, closing)
         for (let i = 0; i < filteredEntries.length; i++) {
             await openFile(filteredEntries[i])
@@ -182,19 +171,18 @@ export const Import = () => {
         }
 
     })
-    const closeConvertDialog = logDecorator(function closeConvertDialog ()  {
-
-        convertDialog.close()
-    })
-
     const openConvertDialog = logDecorator(async function openConvertDialog ()  {
+        if (dirFiles.length < 1) {
+            alert("No files are loaded!")
+            return
+        }
 
         if (!convertDialog) {
             convertDialog = document.createElement("dialog")
             convertDialog.style.padding = "1rem"
 
             const root = createRoot(convertDialog)
-            root.render(<ConvertModal dialog={convertDialog} handleClose={closeConvertDialog} convert={convertFiles}/>)
+            root.render(<ConvertModal dialog={convertDialog} convert={convertFiles}/>)
         }
         document.body.appendChild(convertDialog)
 
@@ -209,7 +197,6 @@ export const Import = () => {
     })
 
     const openFile = logDecorator(async function openFile (entry)  {
-
         await core.executeAsModal(async () => {await app.open(entry)})
     })
 

@@ -1,7 +1,7 @@
 import React from "react";
-import "./CommonStyles.css";
+import "../components/CommonStyles.css";
 
-export const GuideModal = ({dialog, handleClose}) => {
+export const GuideModal = ({dialog}) => {
 
     return (
         <div style={{width: "600px"}}>
@@ -47,7 +47,7 @@ export const GuideModal = ({dialog, handleClose}) => {
             </div>
             <br/>
             <div class={"right-div-align"}>
-                <sp-action-button onClick={handleClose}>Close</sp-action-button>
+                <sp-action-button onClick={() => dialog.close()}>Close</sp-action-button>
             </div>
         </div>
     )

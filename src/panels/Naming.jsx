@@ -6,7 +6,7 @@ import {Section} from "../components/Section";
 import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
-import {GuideModal} from "../components/GuideModal";
+import {GuideModal} from "../modals/GuideModal";
 import {logDecorator} from "../helpers/Logger";
 import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
@@ -67,19 +67,14 @@ export const Naming = () => {
 
     })
 
-    const closeGuideDialog = logDecorator(async function closeGuideDialog()  {
-        guideDialog.close()
-    })
-
     const openGuideDialog = logDecorator(async function openGuideDialog()  {
-
         // WTF is this even. There has to be a better way of doing this but I am too lazy to look for the information
         if (!guideDialog) {
             guideDialog = document.createElement("dialog")
             guideDialog.style.padding = "1rem"
 
             const root = createRoot(guideDialog)
-            root.render(<GuideModal dialog={guideDialog} handleClose={closeGuideDialog}/>)
+            root.render(<GuideModal dialog={guideDialog}/>)
         }
         document.body.appendChild(guideDialog)
 
@@ -112,7 +107,7 @@ export const Naming = () => {
         const dataFolderPath = dataFolder.nativePath
         const newPresets = presets.concat(inputVal)
         setPresets(newPresets)
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newPresets))
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify({presets: newPresets}))
     })
 
     const deletePreset = logDecorator(async function deletePreset(template)  {
@@ -122,7 +117,7 @@ export const Naming = () => {
         setPresets(filteredPresets)
         const dataFolder = await fs.getDataFolder()
         const dataFolderPath = dataFolder.nativePath
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(filteredPresets))
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify({presets: filteredPresets}))
         // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
         document.getElementById("saved-templates").selectedIndex = -1
 

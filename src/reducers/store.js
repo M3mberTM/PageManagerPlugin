@@ -9,7 +9,7 @@ const store = configureStore({
         fileSlice: fileSlice,
         templateSlice: templateSlice,
         folderSlice: folderSlice,
-        focusSlice: focusSlice
+        focusSlice: focusSlice,
     },
 });
 

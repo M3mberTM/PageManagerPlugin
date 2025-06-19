@@ -49,5 +49,3 @@ entrypoints.setup({
         export: exportController
     }
 });
-// Some code to do before loading all the plugins. Shouldn't take more than 300 ms according to docs
-console.log("\n====================AFTER RELOAD===================")

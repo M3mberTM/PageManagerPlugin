@@ -2,10 +2,10 @@ import {storage} from 'uxp';
 import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER} from "./constants";
 
 const fs = storage.localFileSystem;
-
 const DEFAULT_PRESET_VAL = {presets: []}
 const DEFAULT_PROJECTS_VAL = {}
 const DEFAULT_SETTINGS_VAL = {saveOnOpen: false, rememberState: false}
+
 
 export const showAlert = (message) => {
     if (LOG) {
@@ -41,6 +41,7 @@ export const createDataFolderStruct = async () => {
         await dataFolder.createFolder(SETTINGS_FOLDER)
     }
     await populateDataFolders()
+
 }
 
 const populateDataFolders = async () => {
@@ -120,3 +121,16 @@ export const readFile = async (filePath) => {
     }
 }
 
+export const getTruncatedString = (maxLength, text) => {
+    try {
+        const actualLength = maxLength - 3
+        const textLength = text.length
+        if (textLength > actualLength) {
+            return "..." + text.slice(textLength - actualLength, textLength)
+        } else {
+            return "..." + text
+        }
+    } catch (e) {
+       showAlert(e)
+    }
+}

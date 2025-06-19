@@ -1,22 +1,16 @@
 import React from "react";
-import "./CommonStyles.css";
+import "../components/CommonStyles.css";
 import {useState} from "react";
-const fs = require('uxp').storage.localFileSystem;
+import {getTruncatedString} from "../helpers/helper";
+import {storage} from 'uxp';
 
-export const  ConvertModal = ({dialog, handleClose, convert}) => {
+const fs = storage.localFileSystem;
+
+export const ConvertModal = ({dialog, convert}) => {
     const [extension, setExtension] = useState("")
     const [exportFolder, setExportFolder] = useState("")
     const [shownExportFolder, setShownExportFolder] = useState("")
 
-    const getTruncatedString = (maxLength, text) => {
-        const actualLength = maxLength - 3
-        const textLength = text.length
-        if (textLength > actualLength) {
-            return "..." + text.slice(textLength - actualLength, textLength)
-        } else {
-            return "..." + text
-        }
-    }
     const getFolder = async () => {
         console.log("Getting folder")
         const folder = await fs.getFolder();
@@ -27,6 +21,18 @@ export const  ConvertModal = ({dialog, handleClose, convert}) => {
 
     const handleDropDownChange = (value) => {
         setExtension(value)
+    }
+
+    const validateAndSend = () => {
+        if (exportFolder.length < 1 ) {
+            alert("No folder selected")
+            return
+        }
+        if (extension.length < 1) {
+            alert("No extension selected")
+            return
+        }
+        convert(extension, exportFolder)
     }
 
     return (
@@ -44,8 +50,8 @@ export const  ConvertModal = ({dialog, handleClose, convert}) => {
             <sp-action-button class={"button-100"} onClick={getFolder}>Pick export folder</sp-action-button>
             <br/>
             <div class={"right-div-align"}>
-                <sp-action-button onClick={handleClose}>Cancel</sp-action-button>
-                <sp-action-button onClick={() => {convert(extension, exportFolder)}}>Ok</sp-action-button>
+                <sp-action-button onClick={() => dialog.close()}>Cancel</sp-action-button>
+                <sp-action-button onClick={() => {validateAndSend()}}>Ok</sp-action-button>
             </div>
         </div>
     )

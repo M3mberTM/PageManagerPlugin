@@ -6,23 +6,24 @@ import "../components/CommonStyles.css";
 import {FileObject} from "../components/FileObject";
 import {useSelector} from "react-redux";
 import {createRoot} from "react-dom";
-import {OverwriteModal} from "../components/OverwriteModal";
-import {ProjectModal} from "../components/ProjectModal";
+import {OverwriteModal} from "../modals/OverwriteModal";
+import {ProjectModal} from "../modals/ProjectModal";
 import {useDispatch} from "react-redux";
 import {setFiles} from "../reducers/fileSlice";
-import {logDecorator, logToFile} from "../helpers/Logger";
+import {logDecorator} from "../helpers/Logger";
 import {app} from "photoshop";
 import {core} from "photoshop";
 import {storage} from 'uxp';
-import {showAlert, entryExists} from "../helpers/helper";
+import {showAlert, entryExists, readFile, writeToFile} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 import {HighlightButton} from "../components/HighlightButton";
+import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
 
 const fs = storage.localFileSystem;
 
 export const Export = () => {
     // states
-    const [files, setProjectFiles] = useState([])
+    const [projectFiles, setProjectFiles] = useState([])
     const [directories, setDirectories] = useState({})
     const [isPanelFocused, setIsPanelFocused] = useState(false)
     const [currentPageIndex, setCurrentPageIndex] = useState(0)
@@ -30,13 +31,12 @@ export const Export = () => {
     const [pageNumber, setPageNumber] = useState(0)
     const [isStart, setIsStart] = useState(true)
     const [currentPageName, setCurrentPageName] = useState("")
-    const [presets, setPresets] = useState([])
     const [projects, setProjects] = useState({})
     // other variables
     let overwriteAlert = null
     let projectDialog = null
     const isLoadingFile = useRef(false)
-    const presetFileName = 'projects.txt'
+    const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PROJECT_FILE}`
     const dispatch = useDispatch()
     const scrollRef = useRef()
     // selectors
@@ -65,8 +65,8 @@ export const Export = () => {
     // Updates the page name each time it is changed in the Naming panel
     useEffect(() => {
         const effectPageName = async () => {
-            if (files.length > 0) {
-                await getPageName(files[currentPageIndex])
+            if (projectFiles.length > 0) {
+                await getPageName(projectFiles[currentPageIndex])
             }
         }
         effectPageName().then()
@@ -75,10 +75,9 @@ export const Export = () => {
     // Updates the saved projects list
     useEffect(() => {
         const effectProjectContents = async () => {
-            const projectContents = await getPresetFileContents()
+            const projectContents = await loadSavedProjects()
             console.log("loaded saved projects", projectContents)
             setProjects(projectContents)
-            setPresets(Object.keys(projectContents))
         }
         effectProjectContents().then()
     }, [])
@@ -97,11 +96,11 @@ export const Export = () => {
     const openFile = logDecorator(async function openFile(pageIndex)  {
         const app = window.require("photoshop").app
         let fileEntry = null
-        if (files[pageIndex].exportPath.length > 1) {
-            console.log(files[pageIndex].exportPath)
-            fileEntry = await fs.getEntryWithUrl(files[pageIndex].exportPath)
+        if (projectFiles[pageIndex].exportPath.length > 1) {
+            console.log(projectFiles[pageIndex].exportPath)
+            fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].exportPath)
         } else {
-            fileEntry = await fs.getEntryWithUrl(files[pageIndex].filename)
+            fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].filename)
         }
         await app.open(fileEntry)
     })
@@ -116,7 +115,7 @@ export const Export = () => {
 
         const currentDoc = app.activeDocument
         setCurrentPageIndex(pageIndex)
-        const newPageNum = files[pageIndex].pageNumber
+        const newPageNum = projectFiles[pageIndex].pageNumber
         setPageNumber(newPageNum)
         // Changes state of the Photoshop application, executeAsModal has to be used
         await core.executeAsModal(() => openFile(pageIndex))
@@ -132,15 +131,15 @@ export const Export = () => {
                 setIsStart(false)
             }
             const current = currentPageIndex
-            const currentPageNum = files[currentPageIndex].pageNumber
-            const filesLength = files.length
+            const currentPageNum = projectFiles[currentPageIndex].pageNumber
+            const filesLength = projectFiles.length
             const currentDoc = app.activeDocument
             if (isForward) {
                 if (current != filesLength - 1) {
                     setCurrentPageIndex(current + 1)
                     setPageNumber(currentPageNum + 1)
                     await openNextFile(current + 1)
-                    await getPageName(files[current + 1])
+                    await getPageName(projectFiles[current + 1])
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
                 } else {
@@ -151,7 +150,7 @@ export const Export = () => {
                     setCurrentPageIndex(current - 1)
                     setPageNumber(currentPageNum - 1)
                     await openNextFile(current - 1)
-                    await getPageName(files[current - 1])
+                    await getPageName(projectFiles[current - 1])
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
                 }
@@ -169,9 +168,9 @@ export const Export = () => {
     // Changes the file status to complete if not completed and vice versa
     const changeFileStatus = logDecorator(function changeFileStatus(index)  {
 
-        const file = files[index]
+        const file = projectFiles[index]
         const newFile = {...file, isDone: !file.isDone}
-        const newFiles = files.map((file) => {
+        const newFiles = projectFiles.map((file) => {
             if (file.id == newFile.id) {
                 return newFile
             } else {
@@ -189,10 +188,10 @@ export const Export = () => {
     })
 
     const openStartingFile = logDecorator(async function openStartingFile()  {
-        if (files.length > 0) {
+        if (projectFiles.length > 0) {
             await openNextFile(0)
             setIsStart(false)
-            await getPageName(files[0])
+            await getPageName(projectFiles[0])
         } else {
             alert("No files were loaded")
         }
@@ -200,9 +199,7 @@ export const Export = () => {
     })
 
     const addLeadingZeros = logDecorator(function addLeadingZeros(num, size)  {
-
         return String(num).padStart(size, '0')
-
     })
 
     // gets the page name according to the template given in Naming panel
@@ -237,9 +234,9 @@ export const Export = () => {
         const isSaved = await require('photoshop').core.executeAsModal(savePSD.bind(null, entry))
         if (isSaved) {
             console.log("Successfully saved")
-            const ogPage = files[currentPageIndex]
+            const ogPage = projectFiles[currentPageIndex]
             const updatedPage = {...ogPage, exportPath: `${directories.exportDir}\\${saveName}`}
-            const newFiles = files.map((item) => {
+            const newFiles = projectFiles.map((item) => {
                 if (item.id == updatedPage.id) {
                     return updatedPage
                 } else {
@@ -260,9 +257,9 @@ export const Export = () => {
             return
         }
         const pageNumDifference = wantedPageNum - pageNumber
-        const ogPage = files[currentPageIndex]
+        const ogPage = projectFiles[currentPageIndex]
         const updatedPage = {...ogPage, pageNumber: ogPage.pageNumber + pageNumDifference}
-        const newFiles = files.map((item) => {
+        const newFiles = projectFiles.map((item) => {
             if (item.id == updatedPage.id) {
                 return updatedPage
             } else if (item.id > updatedPage.id) {
@@ -273,19 +270,8 @@ export const Export = () => {
         })
         setPageNumber(pageNumber + pageNumDifference)
         setProjectFiles(newFiles)
-        await getPageName(updatedPage)
+        getPageName(updatedPage).then()
         console.log("Updated page numbers on current and further files", newFiles)
-
-    })
-
-    const closeOverwriteDialog = logDecorator(async function closeOverwriteDialog()  {
-        overwriteAlert.close()
-
-    })
-
-
-    const closeProjectDialog = logDecorator(async function closeProjectDialog()  {
-        projectDialog.close()
 
     })
 
@@ -309,7 +295,7 @@ export const Export = () => {
 
     })
     const overwriteFile = logDecorator(async function overwriteFile()  {
-        await closeOverwriteDialog()
+        overwriteAlert.close()
         await saveFile()
 
     })
@@ -321,7 +307,7 @@ export const Export = () => {
             overwriteAlert.style.padding = "1rem"
             // creates element in the root to server as a dialog
             const root = createRoot(overwriteAlert)
-            root.render(<OverwriteModal dialog={overwriteAlert} handleClose={closeOverwriteDialog} fileToOverwriteName={currentPageName}
+            root.render(<OverwriteModal dialog={overwriteAlert} fileToOverwriteName={currentPageName}
                                         overwriteFile={overwriteFile}/>)
         }
         document.body.appendChild(overwriteAlert)
@@ -339,13 +325,18 @@ export const Export = () => {
 
 
     const openProjectDialog = logDecorator(async function openProjectDialog()  {
+        if (projectFiles.length < 1) {
+            alert("No files are loaded!")
+            return
+        }
+
         if (!projectDialog) {
             projectDialog = document.createElement("dialog")
             projectDialog.style.padding = "1rem"
 
             // creates element in the root to server as a dialog
             const root = createRoot(projectDialog)
-            root.render(<ProjectModal dialog={projectDialog} handleClose={closeProjectDialog} files={files} saveProject={saveProject}/>)
+            root.render(<ProjectModal dialog={projectDialog} files={projectFiles} saveProject={saveProject}/>)
         }
         document.body.appendChild(projectDialog)
 
@@ -373,65 +364,48 @@ export const Export = () => {
         }
     })
 
-    const getPresetFileContents = logDecorator(async function getPresetFileContents()  {
-
+    const loadSavedProjects = logDecorator(async function loadSavedProjects() {
         const dataFolder = await fs.getDataFolder()
-        if (await entryExists(`${dataFolder.nativePath}\\${presetFileName}`)) {
-            console.log("Saved projects file exists already")
-            const presetFile = await dataFolder.getEntry(presetFileName)
-            const fileContent = await presetFile.read()
-            return JSON.parse(fileContent)
-        } else {
-            console.log("Saved projects file does not exist yet")
-            const presetFile = await dataFolder.createFile(presetFileName)
-            const initialContent = {}
-            presetFile.write(JSON.stringify(initialContent))
-            return initialContent
-        }
-
-    })
-    const writeToPresetFile = logDecorator(async function writeToPresetFile(content)  {
-
-        const dataFolder = await fs.getDataFolder()
-        const file = await dataFolder.getEntry(presetFileName)
-        await file.write(content)
-        console.log('Successfully written new project')
-
+        const dataFolderPath = dataFolder.nativePath
+        const fileContents = await readFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`)
+        return JSON.parse(fileContents)
     })
 
     const removeProject = logDecorator(async function removeProject(inputVal)  {
-
         const newProjects = {}
-        for (let i = 0; i < presets.length; i++) {
-            if (presets[i] != inputVal) {
-                newProjects[presets[i]] = projects[presets[i]]
+        for (let i = 0; i < Object.keys(projects).length; i++) {
+            const key = Object.keys(projects)[i]
+            if (key !== inputVal) {
+                newProjects[key] = projects[key]
             }
         }
-        const newPresets = presets.filter((item) => {
-            return item != inputVal
-        })
         setProjects(newProjects)
-        setPresets(newPresets)
-        await writeToPresetFile(JSON.stringify(newProjects))
+        const dataFolder = await fs.getDataFolder()
+        const dataFolderPath = dataFolder.nativePath
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newProjects))
+        console.log("Removed project. Current projects: ", newProjects)
+        // do this to unselect anything in the dropdown menu
         document.getElementById("saved-projects").selectedIndex = -1
 
     })
 
     const saveProject = logDecorator(async function saveProject(inputVal)  {
+        projectDialog.close()
+        const dataFolder = await fs.getDataFolder()
+        const dataFolderPath = dataFolder.nativePath
+        const newProject = {}
+        newProject[inputVal] = projectFiles
+        const newProjects = {...projects, ...newProject}
 
-        const newProjects = await getPresetFileContents()
-        newProjects[inputVal] = files
-        setPresets(Object.keys(newProjects))
         setProjects(newProjects)
-        await writeToPresetFile(JSON.stringify(newProjects))
-        await closeProjectDialog()
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newProjects))
+        console.log("New project saved", newProject)
 
     })
 
     const loadProject = logDecorator(async function loadProject(projectName)  {
 
-        const projectContents = await getPresetFileContents()
-        const selectedProject = projectContents[projectName]
+        const selectedProject = projects[projectName]
         setProjectFiles(selectedProject)
         dispatch(setFiles(selectedProject))
 
@@ -441,12 +415,12 @@ export const Export = () => {
         {/*File showcase*/}
         <Section sectionName={"Files"} isTransparent={true}>
             <div>
-                <sp-progressbar max={files.length} value={completedNum} style={{width: "100%"}}>
+                <sp-progressbar max={projectFiles.length} value={completedNum} style={{width: "100%"}}>
                     <sp-label slot={"label"} size={"small"}>Progress:</sp-label>
                 </sp-progressbar>
                 <div id={"files"}>
-                    {files.map((file, index) => <FileObject scrollRef={index == currentPageIndex ? scrollRef : undefined} name={file.name} status={file.isDone}
-                                                            active={index == currentPageIndex} key={index} pageNum={file.pageNumber} goToFunc={goToFile} pageIndex={index}
+                    {projectFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex ? scrollRef : undefined} name={file.name} status={file.isDone}
+                                                            active={index === currentPageIndex} key={index} pageNum={file.pageNumber} goToFunc={goToFile} pageIndex={index}
                     ></FileObject>)}
                 </div>
             </div>
@@ -498,7 +472,7 @@ export const Export = () => {
         <Section isTransparent={true} sectionName={"project"}>
             <sp-picker class={"button-100"} placeholder={"Choose a selection..."}>
                 <sp-menu slot={"options"} id={"saved-projects"}>
-                    {presets.map((item, index) => {
+                    {Object.keys(projects).map((item, index) => {
                         return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
                     })}
                 </sp-menu>
@@ -511,7 +485,7 @@ export const Export = () => {
                 <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isPanelFocused}>Load</ActionButton>
             </div>
             <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
-                openProjectDialog()
+                openProjectDialog().then()
             }} isDisabled={!isPanelFocused}>Save
             </HighlightButton>
         </Section>
