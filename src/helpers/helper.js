@@ -4,7 +4,7 @@ import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER} from "
 const fs = storage.localFileSystem;
 const DEFAULT_PRESET_VAL = {presets: []}
 const DEFAULT_PROJECTS_VAL = {}
-const DEFAULT_SETTINGS_VAL = {saveOnOpen: false, rememberState: false}
+const DEFAULT_SETTINGS_VAL = {saveBetweenClose: false, docSaveOnOpen: false, zeroNumbering: true}
 
 
 export const showAlert = (message) => {

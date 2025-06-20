@@ -17,7 +17,7 @@ const aboutController = new CommandController(({dialog}) => <About dialog={dialo
     size: {width: 480, height: 480} // still don't understand what this line does
 });
 
-const settingsController = new CommandController(({dialog}) => <Settings dialog={dialog}/>, {
+const settingsController = new CommandController(({dialog}) =><Provider store={store}><Settings dialog={dialog}/></Provider>, {
     id: "settings",
     title: "Page Manager Settings",
     size: {width: 480, height: 480} // still don't understand what this line does

@@ -29,8 +29,7 @@ export const About = ({dialog}) => {
                 <div class={"row-highlight-style"}><sp-detail>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body>{versions.uxp}</sp-body></div>
             </div>
             <sp-button-group style={{marginTop: "10px"}}>
-                <sp-button tabindex={0} variant="secondary" quiet="quiet" onClick={() => dialog.close("reasonCanceled")}>Cancel</sp-button>
-                <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close("ok")}>OK</sp-button>
+                <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close()}>Close</sp-button>
             </sp-button-group>
         </div>
     );

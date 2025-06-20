@@ -2,14 +2,16 @@ import { configureStore } from '@reduxjs/toolkit';
 import fileSlice from "./fileSlice";
 import templateSlice from "./templateSlice";
 import folderSlice from "./folderSlice";
-import focusSlice from "./focusSlice";
+import helperSlice from "./helperSlice";
+import storageSlice from "./storageSlice";
 
 const store = configureStore({
     reducer: {
         fileSlice: fileSlice,
         templateSlice: templateSlice,
         folderSlice: folderSlice,
-        focusSlice: focusSlice,
+        helperSlice: helperSlice,
+        storageSlice: storageSlice,
     },
 });
 

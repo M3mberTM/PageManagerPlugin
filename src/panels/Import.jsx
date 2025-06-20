@@ -6,7 +6,7 @@ import "../components/CommonStyles.css";
 import {setFiles} from "../reducers/fileSlice"
 import {useDispatch, useSelector} from "react-redux";
 import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
-import {setIsFocused} from "../reducers/focusSlice";
+import {setIsFocused} from "../reducers/helperSlice";
 import {ConvertModal} from "../modals/ConvertModal";
 import {logDecorator} from "../helpers/Logger";
 import {storage} from 'uxp';
@@ -28,7 +28,7 @@ export const Import = () => {
     // Selectors - used to transition information between plugin pages
     const dirs = useSelector((state) => state.folderSlice.value)
     const dirFiles = useSelector(state => state.fileSlice.value)
-    const isFocus = useSelector(state => state.focusSlice.value)
+    const isFocus = useSelector(state => state.helperSlice.isFocused)
     const dispatch = useDispatch()
 
     // Other helpful variables

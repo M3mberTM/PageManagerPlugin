@@ -7,12 +7,13 @@ import {setTemplate} from "../reducers/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
 import {GuideModal} from "../modals/GuideModal";
-import {logDecorator} from "../helpers/Logger";
+import {clearLogs, logDecorator} from "../helpers/Logger";
 import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 import {storage} from 'uxp';
 import {HighlightButton} from "../components/HighlightButton";
 import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
+import {setIsSetUp} from "../reducers/helperSlice";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
@@ -27,7 +28,8 @@ export const Naming = () => {
     let guideDialog = null;
     const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`
     // selectors
-    const isFocus = useSelector(state => state.focusSlice.value)
+    const isFocus = useSelector(state => state.helperSlice.isFocused)
+    const isSetUp = useSelector(state => state.helperSlice.isSetUp)
 
     useEffect(() => {
         setIsPanelFocused(isFocus)
@@ -40,8 +42,17 @@ export const Naming = () => {
             console.log("loaded presets", presetContents)
             setPresets(presetContents)
         }
-        createDataFolderStruct().then(() => {
+        if (isSetUp) {
             effectPresetContents().then()
+            // Clears the log folder so it only contains the last 4/5 days of logs
+            clearLogs().then()
+        }
+    }, [isSetUp])
+
+    useEffect(() => {
+        // Creates the data folder structure along with all the necessary files. Then it lets the other code know to run normal set up functions
+        createDataFolderStruct().then(() => {
+            dispatch(setIsSetUp(true))
         })
     }, [])
 

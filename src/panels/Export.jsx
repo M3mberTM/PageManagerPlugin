@@ -43,7 +43,8 @@ export const Export = () => {
     const dirFiles = useSelector(state => state.fileSlice.value)
     const namingTemplate = useSelector((state) => state.templateSlice.value)
     const dirs = useSelector((state) => state.folderSlice.value)
-    const isFocus = useSelector(state => state.focusSlice.value)
+    const isFocus = useSelector(state => state.helperSlice.isFocused)
+    const isSetUp = useSelector(state => state.helperSlice.isSetUp)
 
     useEffect(() => {
         setIsPanelFocused(isFocus)
@@ -79,13 +80,11 @@ export const Export = () => {
             console.log("loaded saved projects", projectContents)
             setProjects(projectContents)
         }
-        // todo figure out this shit. How to run only after the folders are populated
-        /* possible ways of doing so and still make it organized:
-        Make new component, which using dispatch notifies all the setup functions to start.
-        Question is, where to put it and load it?
-         */
-        effectProjectContents().then()
-    }, [])
+        // just call the function once after everything loaded. Before it would load also in the beginning
+        if (isSetUp) {
+            effectProjectContents().then()
+        }
+    }, [isSetUp])
 
     //Updates the import and export directories
     useEffect(() => {

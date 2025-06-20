@@ -103,4 +103,4 @@ function logDecorator(fn) {
     }
 }
 
-export {info, warning, error, logToFile, logDecorator}
+export {info, warning, error, logToFile, logDecorator, clearLogs}
