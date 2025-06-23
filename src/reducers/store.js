@@ -3,7 +3,7 @@ import fileSlice from "./fileSlice";
 import templateSlice from "./templateSlice";
 import folderSlice from "./folderSlice";
 import helperSlice from "./helperSlice";
-import storageSlice from "./storageSlice";
+import settingSlice from "./settingsSlice";
 
 const store = configureStore({
     reducer: {
@@ -11,7 +11,7 @@ const store = configureStore({
         templateSlice: templateSlice,
         folderSlice: folderSlice,
         helperSlice: helperSlice,
-        storageSlice: storageSlice,
+        settingsSlice: settingSlice,
     },
 });
 

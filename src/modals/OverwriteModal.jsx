@@ -16,7 +16,7 @@ export const OverwriteModal = ({dialog, overwriteFile, fileToOverwriteName}) => 
             <br/>
             <div class={"right-div-align"}>
                 <sp-action-button onClick={() => dialog.close()}>Cancel</sp-action-button>
-                <sp-action-button onClick={() => {overwriteFile()}}>Ok</sp-action-button>
+                <sp-action-button onClick={() => {overwriteFile(fileToOverwriteName)}}>Ok</sp-action-button>
             </div>
         </div>
     )

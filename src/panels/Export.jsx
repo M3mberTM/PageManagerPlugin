@@ -45,6 +45,7 @@ export const Export = () => {
     const dirs = useSelector((state) => state.folderSlice.value)
     const isFocus = useSelector(state => state.helperSlice.isFocused)
     const isSetUp = useSelector(state => state.helperSlice.isSetUp)
+    const saveOnOpen = useSelector(state => state.settingsSlice.docSaveOnOpen)
 
     useEffect(() => {
         setIsPanelFocused(isFocus)
@@ -67,7 +68,8 @@ export const Export = () => {
     useEffect(() => {
         const effectPageName = async () => {
             if (projectFiles.length > 0) {
-                await getPageName(projectFiles[currentPageIndex])
+                const pageName = await getPageName(projectFiles[currentPageIndex])
+                setCurrentPageName(pageName)
             }
         }
         effectPageName().then()
@@ -139,24 +141,33 @@ export const Export = () => {
             const filesLength = projectFiles.length
             const currentDoc = app.activeDocument
             if (isForward) {
-                if (current != filesLength - 1) {
+                if (current !== filesLength - 1) {
                     setCurrentPageIndex(current + 1)
                     setPageNumber(currentPageNum + 1)
                     await openNextFile(current + 1)
-                    await getPageName(projectFiles[current + 1])
+                    const pageName = await getPageName(projectFiles[current + 1])
+                    setCurrentPageName(pageName)
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
+                    console.log("Save on Open: ", saveOnOpen)
+                    if (saveOnOpen) {
+                        await overwriteCheck(pageName)
+                    }
                 } else {
                     alert("Congratulation, you are done!")
                 }
             } else {
-                if (current != 0) {
+                if (current !== 0) {
                     setCurrentPageIndex(current - 1)
                     setPageNumber(currentPageNum - 1)
                     await openNextFile(current - 1)
-                    await getPageName(projectFiles[current - 1])
+                    const pageName = await getPageName(projectFiles[current - 1])
+                    setCurrentPageName(pageName)
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
+                    if (saveOnOpen) {
+                        await overwriteCheck(pageName)
+                    }
                 }
             }
             elementScrollToView().then()
@@ -195,7 +206,13 @@ export const Export = () => {
         if (projectFiles.length > 0) {
             await openNextFile(0)
             setIsStart(false)
-            await getPageName(projectFiles[0])
+            console.log("Project files", projectFiles)
+            console.log("saveOnOpen", saveOnOpen)
+            const pageName = await getPageName(projectFiles[0])
+            setCurrentPageName(pageName)
+            if (saveOnOpen) {
+                await overwriteCheck(pageName)
+            }
         } else {
             alert("No files were loaded")
         }
@@ -224,30 +241,30 @@ export const Export = () => {
             const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
-        const finalName = leadingZerosAppend.replace(/\.[\w\d]+$/, "")
-
-        setCurrentPageName(finalName)
+        return leadingZerosAppend.replace(/\.[\w\d]+$/, "")
 
     })
 
-    const saveFile = logDecorator(async function saveFile()  {
+    const saveFile = logDecorator(async function saveFile(pageName)  {
 
         const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
-        const saveName = `${currentPageName}.psd`
+        const saveName = `${pageName}.psd`
         const entry = await exportFolder.createFile(saveName, {overwrite: true})
         const isSaved = await require('photoshop').core.executeAsModal(savePSD.bind(null, entry))
         if (isSaved) {
-            console.log("Successfully saved")
+            console.log("File was successfully saved", entry)
             const ogPage = projectFiles[currentPageIndex]
             const updatedPage = {...ogPage, exportPath: `${directories.exportDir}\\${saveName}`}
             const newFiles = projectFiles.map((item) => {
-                if (item.id == updatedPage.id) {
+                if (item.id === updatedPage.id) {
                     return updatedPage
                 } else {
                     return item
                 }
             })
             setProjectFiles(newFiles)
+        } else {
+            alert("Something went wrong and we couldn't save your file!")
         }
 
     })
@@ -264,7 +281,7 @@ export const Export = () => {
         const ogPage = projectFiles[currentPageIndex]
         const updatedPage = {...ogPage, pageNumber: ogPage.pageNumber + pageNumDifference}
         const newFiles = projectFiles.map((item) => {
-            if (item.id == updatedPage.id) {
+            if (item.id === updatedPage.id) {
                 return updatedPage
             } else if (item.id > updatedPage.id) {
                 return {...item, pageNumber: item.pageNumber + pageNumDifference}
@@ -274,12 +291,13 @@ export const Export = () => {
         })
         setPageNumber(pageNumber + pageNumDifference)
         setProjectFiles(newFiles)
-        getPageName(updatedPage).then()
+        const pageName = await getPageName(updatedPage)
+        setCurrentPageName(pageName)
         console.log("Updated page numbers on current and further files", newFiles)
 
     })
 
-    const overwriteCheck = logDecorator(async function overwriteCheck()  {
+    const overwriteCheck = logDecorator(async function overwriteCheck(pageName)  {
         if (directories.exportDir.length < 1) {
             alert("No export directory is chosen")
             return
@@ -290,28 +308,28 @@ export const Export = () => {
             return
         }
 
-        const currentFile = `${directories.exportDir}\\${currentPageName}.psd`
+        const currentFile = `${directories.exportDir}\\${pageName}.psd`
         if (await entryExists(currentFile)) {
             await openOverwriteDialog()
         } else {
-            await saveFile()
+            await saveFile(pageName)
         }
 
     })
-    const overwriteFile = logDecorator(async function overwriteFile()  {
+    const overwriteFile = logDecorator(async function overwriteFile(pageName)  {
         overwriteAlert.close()
-        await saveFile()
+        await saveFile(pageName)
 
     })
 
     // if file is about to be overwritten, show overwrite dialog because uxp doesn't support overwrite dialog by default
-    const openOverwriteDialog = logDecorator(async function openOverwriteDialog()  {
+    const openOverwriteDialog = logDecorator(async function openOverwriteDialog(pageName)  {
         if (!overwriteAlert) {
             overwriteAlert = document.createElement("dialog")
             overwriteAlert.style.padding = "1rem"
             // creates element in the root to server as a dialog
             const root = createRoot(overwriteAlert)
-            root.render(<OverwriteModal dialog={overwriteAlert} fileToOverwriteName={currentPageName}
+            root.render(<OverwriteModal dialog={overwriteAlert} fileToOverwriteName={pageName}
                                         overwriteFile={overwriteFile}/>)
         }
         document.body.appendChild(overwriteAlert)
@@ -433,7 +451,7 @@ export const Export = () => {
                     <div>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{"<"}</ActionButton>
                         <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isPanelFocused} clickHandler={() => {
-                            openStartingFile()
+                            openStartingFile().then()
                         }}>Start
                         </HighlightButton>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{">"}</ActionButton>
@@ -442,21 +460,21 @@ export const Export = () => {
                 {!isStart &&
                     <div>
                         <ActionButton style={{width: "20%"}} clickHandler={() => {
-                            goToNextFile(false)
+                            goToNextFile(false).then()
                         }} isDisabled={isStart || !isPanelFocused}>{"<"}</ActionButton>
                         <ActionButton style={{width: "60%"}} clickHandler={() => {
-                            changeFileStatus(currentPageIndex)
+                            changeFileStatus(currentPageIndex).then()
                         }} isDisabled={isStart || !isPanelFocused}>Complete
                         </ActionButton>
                         <ActionButton style={{width: "20%"}} clickHandler={() => {
-                            goToNextFile(true)
+                            goToNextFile(true).then()
                         }} isDisabled={isStart || !isPanelFocused}>{">"}</ActionButton>
                     </div>
                 }
             </div>
                 <div class={"fit-row-style"}>
                     <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
-                        overwriteCheck()
+                        overwriteCheck(currentPageName).then()
                     }} isDisabled={isStart || !isPanelFocused}>Save
                     </HighlightButton>
                 </div>
@@ -467,7 +485,7 @@ export const Export = () => {
                 <sp-label slot={"label"} isrequired={"true"}>Manual page number</sp-label>
             </sp-textfield>
                 <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
-                    setNewPageNum(document.getElementById("page-number-input").value)
+                    setNewPageNum(document.getElementById("page-number-input").value).then()
                 }} isDisabled={isStart || !isPanelFocused}>Set</HighlightButton>
             <sp-heading size={"XS"}>Current file name</sp-heading>
             <sp-heading size={"XXS"}>{currentPageName}</sp-heading>
@@ -483,7 +501,7 @@ export const Export = () => {
             </sp-picker>
             <div class={"fit-row-style"}>
                 <ActionButton style={{width: "50%"}} clickHandler={() => {
-                    removeProject(document.getElementById("saved-projects").value)
+                    removeProject(document.getElementById("saved-projects").value).then()
                 }} isDisabled={!isPanelFocused}>Remove
                 </ActionButton>
                 <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isPanelFocused}>Load</ActionButton>

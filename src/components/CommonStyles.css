@@ -62,7 +62,7 @@ TODO Organize this css more
 .row-highlight-style {
     display: flex;
     width: 100%;
-    marginBottom: 0;
+    margin-bottom: 0;
     flex-wrap: wrap;
     background-color: var(--highlight-color);
 }
@@ -133,6 +133,6 @@ TODO Organize this css more
     height: 10px;
 }
 
-.stupid-icon {
-    transform: scaleX(-1);
+.zeroBMargin {
+    margin-bottom: 0;
 }

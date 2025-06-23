@@ -24,9 +24,9 @@ export const About = ({dialog}) => {
             </sp-body>
             <sp-detail>PLUGIN DETAILS</sp-detail>
             <div class={"fit-row-style unimportant-button"}>
-                <div class={"row-highlight-style"}><sp-detail>PLUGIN: </sp-detail><sp-body>Beta {versions.plugin}</sp-body></div>
-                <div class={"row-highlight-style"}><sp-detail>OPERATING SYSTEM:</sp-detail><sp-body> {os.platform()} {os.release()}</sp-body></div>
-                <div class={"row-highlight-style"}><sp-detail>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body>{versions.uxp}</sp-body></div>
+                <div class={"row-highlight-style"}><sp-detail class={"zeroBMargin"} style={{paddingTop: "5px"}}>PLUGIN: </sp-detail><sp-body class={"zeroBMargin"}>Beta {versions.plugin}</sp-body></div>
+                <div class={"row-highlight-style"}><sp-detail class={"zeroBMargin"} style={{paddingTop: "5px"}}>OPERATING SYSTEM:</sp-detail><sp-body class={"zeroBMargin"}> {os.platform()} {os.release()}</sp-body></div>
+                <div class={"row-highlight-style"}><sp-detail class={"zeroBMargin"} style={{paddingTop: "5px"}}>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body class={"zeroBMargin"}>{versions.uxp}</sp-body></div>
             </div>
             <sp-button-group style={{marginTop: "10px"}}>
                 <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close()}>Close</sp-button>

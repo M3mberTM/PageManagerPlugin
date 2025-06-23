@@ -1,7 +1,7 @@
 import {createSlice} from '@reduxjs/toolkit';
 
-const storageSlice = createSlice({
-    name: 'storageSlicer',
+const settingsSlice = createSlice({
+    name: 'settingsSlicer',
     initialState: {saveBetweenClose: false, docSaveOnOpen: false, zeroNumbering: true},
     reducers: {
         setSaveBetweenClose: (state, action) => {
@@ -21,6 +21,6 @@ const storageSlice = createSlice({
     },
 });
 
-export const {setAllStates, setSaveBetweenClose, setDocSaveOnOpen, setZeroNumbering} = storageSlice.actions;
+export const {setAllStates, setSaveBetweenClose, setDocSaveOnOpen, setZeroNumbering} = settingsSlice.actions;
 
-export default storageSlice.reducer;
+export default settingsSlice.reducer;
