@@ -6,7 +6,6 @@ const DEFAULT_PRESET_VAL = {presets: []}
 const DEFAULT_PROJECTS_VAL = {}
 const DEFAULT_SETTINGS_VAL = {saveBetweenClose: false, docSaveOnOpen: false, zeroNumbering: true}
 
-
 export const showAlert = (message) => {
     if (LOG) {
         alert(message)

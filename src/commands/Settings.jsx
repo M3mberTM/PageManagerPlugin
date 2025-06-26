@@ -8,10 +8,12 @@ import {SETTING_IDS, SETTINGS_FOLDER, SETTINGS_FILE, PATH_DELIMITER} from "../he
 import {setDocSaveOnOpen, setZeroNumbering, setSaveBetweenClose, setAllStates} from "../reducers/settingsSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {readFile, writeToFile} from "../helpers/helper";
+import {useSetUp} from "../helpers/presetManager";
 
 const fs = storage.localFileSystem;
 
 export const Settings = ({dialog}) => {
+    useSetUp()
     const dispatch = useDispatch()
     const settings = useSelector(state => state.settingsSlice)
     const settingsFile = `${SETTINGS_FOLDER}${PATH_DELIMITER}${SETTINGS_FILE}`
@@ -20,17 +22,21 @@ export const Settings = ({dialog}) => {
     const [allSettings, setAllSettings] = useState(settings)
 
     useEffect(() => {
-        const loadSettings = async () => {
-            const dataFolder = await fs.getDataFolder()
-            const dataFolderPath = dataFolder.nativePath
-            const content = await readFile(`${dataFolderPath}${PATH_DELIMITER}${settingsFile}`)
-            dispatch(setAllStates(JSON.parse(content)))
-            setAllSettings(JSON.parse(content))
-        }
-        if (isSetUp) {
-            loadSettings().then()
-        }
-    }, [isSetUp])
+        setAllSettings(settings)
+    }, [settings])
+
+    // useEffect(() => {
+    //     const loadSettings = async () => {
+    //         const dataFolder = await fs.getDataFolder()
+    //         const dataFolderPath = dataFolder.nativePath
+    //         const content = await readFile(`${dataFolderPath}${PATH_DELIMITER}${settingsFile}`)
+    //         dispatch(setAllStates(JSON.parse(content)))
+    //         setAllSettings(JSON.parse(content))
+    //     }
+    //     if (isSetUp) {
+    //         loadSettings().then()
+    //     }
+    // }, [isSetUp])
 
     const handleSetting = logDecorator(async function handleSetting (settingId, value) {
         let newSettings = {...settings}

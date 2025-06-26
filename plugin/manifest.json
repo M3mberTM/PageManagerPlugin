@@ -23,6 +23,7 @@
         "https"
       ],
       "extensions": [
+        "",
         ".svg",
         ".png"
       ]

@@ -1,11 +1,23 @@
 import React from "react";
-
-import { versions } from "uxp";
+import { storage, versions} from "uxp";
 import os from "os";
-
 import "../components/CommonStyles.css"
+import {ActionButton} from "../components/ActionButton";
 
+const fs = storage.localFileSystem;
+const shell = require('uxp').shell
 export const About = ({dialog}) => {
+
+    const openDataFolder = async () => {
+        try {
+            const dataFolder = await fs.getDataFolder()
+            console.log(dataFolder.nativePath)
+            await shell.openPath(dataFolder.nativePath)
+        } catch (e) {
+           console.log(e)
+        }
+    }
+
     return (
         <div>
             <sp-heading>Page Manager Information</sp-heading>
@@ -28,8 +40,9 @@ export const About = ({dialog}) => {
                 <div class={"row-highlight-style"}><sp-detail class={"zeroBMargin"} style={{paddingTop: "5px"}}>OPERATING SYSTEM:</sp-detail><sp-body class={"zeroBMargin"}> {os.platform()} {os.release()}</sp-body></div>
                 <div class={"row-highlight-style"}><sp-detail class={"zeroBMargin"} style={{paddingTop: "5px"}}>UNIFIED EXTENSIBILITY PLATFORM:</sp-detail><sp-body class={"zeroBMargin"}>{versions.uxp}</sp-body></div>
             </div>
+            <ActionButton classHandle={"button-100"}  style={{marginTop: "5px"}} clickHandler={openDataFolder} isDisabled={false}>Open Data Folder</ActionButton>
             <sp-button-group style={{marginTop: "10px"}}>
-                <sp-button tabindex={0} autofocus="autofocus" variant="primary" onClick={() => dialog.close()}>Close</sp-button>
+                <sp-button tabindex={0} style={{marginLeft: "auto"}} autofocus="autofocus" variant="primary" onClick={() => dialog.close()}>Close</sp-button>
             </sp-button-group>
         </div>
     );

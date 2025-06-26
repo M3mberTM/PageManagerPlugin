@@ -14,9 +14,11 @@ import {storage} from 'uxp';
 import {HighlightButton} from "../components/HighlightButton";
 import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
 import {setIsSetUp} from "../reducers/helperSlice";
+import {useSetUp} from "../helpers/presetManager";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
+    useSetUp()
     const exampleFilename = "FileName001"
     const exampleFileNumber = 1
     // state vars
@@ -30,31 +32,37 @@ export const Naming = () => {
     // selectors
     const isFocus = useSelector(state => state.helperSlice.isFocused)
     const isSetUp = useSelector(state => state.helperSlice.isSetUp)
+    const savedPresets = useSelector(state => state.presetSlice.presets)
 
     useEffect(() => {
         setIsPanelFocused(isFocus)
     }, [isFocus])
 
-    useEffect( () => {
-        // load the preset file saved before starting anything
-        const effectPresetContents = async () => {
-            const presetContents = await loadPresets()
-            console.log("loaded presets", presetContents)
-            setPresets(presetContents)
-        }
-        if (isSetUp) {
-            effectPresetContents().then()
-            // Clears the log folder so it only contains the last 4/5 days of logs
-            clearLogs().then()
-        }
-    }, [isSetUp])
-
     useEffect(() => {
-        // Creates the data folder structure along with all the necessary files. Then it lets the other code know to run normal set up functions
-        createDataFolderStruct().then(() => {
-            dispatch(setIsSetUp(true))
-        })
-    }, [])
+        console.log("Saved presets: ", savedPresets)
+        setPresets(savedPresets)
+    }, [savedPresets])
+
+    // useEffect( () => {
+    //     // load the preset file saved before starting anything
+    //     const effectPresetContents = async () => {
+    //         const presetContents = await loadPresets()
+    //         console.log("loaded presets", presetContents)
+    //         setPresets(presetContents)
+    //     }
+    //     if (isSetUp) {
+    //         effectPresetContents().then()
+    //         // Clears the log folder so it only contains the last 4/5 days of logs
+    //         clearLogs().then()
+    //     }
+    // }, [isSetUp])
+
+    // useEffect(() => {
+    //     // Creates the data folder structure along with all the necessary files. Then it lets the other code know to run normal set up functions
+    //     createDataFolderStruct().then(() => {
+    //         dispatch(setIsSetUp(true))
+    //     })
+    // }, [])
 
 
     const applyTemplate = logDecorator(function applyTemplate(inputName)  {
@@ -73,6 +81,7 @@ export const Naming = () => {
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
 
+        console.log('Applying pattern', inputName)
         setShownName(leadingZerosAppend)
         dispatch(setTemplate(inputName)) // sets to global variable
 

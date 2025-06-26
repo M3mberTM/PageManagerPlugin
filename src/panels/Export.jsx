@@ -18,10 +18,12 @@ import {showAlert, entryExists, readFile, writeToFile} from "../helpers/helper";
 import {ActionButton} from "../components/ActionButton";
 import {HighlightButton} from "../components/HighlightButton";
 import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
+import {useSetUp} from "../helpers/presetManager";
 
 const fs = storage.localFileSystem;
 
 export const Export = () => {
+    useSetUp()
     // states
     const [projectFiles, setProjectFiles] = useState([])
     const [directories, setDirectories] = useState({})
@@ -44,12 +46,19 @@ export const Export = () => {
     const namingTemplate = useSelector((state) => state.templateSlice.value)
     const dirs = useSelector((state) => state.folderSlice.value)
     const isFocus = useSelector(state => state.helperSlice.isFocused)
+    const savedProjects = useSelector(state => state.projectSlice.savedProjects)
     const isSetUp = useSelector(state => state.helperSlice.isSetUp)
-    const saveOnOpen = useSelector(state => state.settingsSlice.docSaveOnOpen)
 
+    // disables buttons (is on when there is a file picker)
     useEffect(() => {
         setIsPanelFocused(isFocus)
     }, [isFocus])
+
+    // loads the saved projects from files
+    useEffect(() => {
+        console.log("Saved projects: ", savedProjects)
+        setProjects(savedProjects)
+    }, [savedProjects])
 
     // updates the files shown each time they are changed in the other panels
     useEffect(() => {
@@ -66,27 +75,26 @@ export const Export = () => {
 
     // Updates the page name each time it is changed in the Naming panel
     useEffect(() => {
-        const effectPageName = async () => {
-            if (projectFiles.length > 0) {
-                const pageName = await getPageName(projectFiles[currentPageIndex])
+        if (projectFiles.length > 0) {
+            getPageName(projectFiles[currentPageIndex]).then((pageName) => {
+                console.log("Got page name", pageName)
                 setCurrentPageName(pageName)
-            }
+            })
         }
-        effectPageName().then()
     }, [namingTemplate])
 
     // Updates the saved projects list
-    useEffect(() => {
-        const effectProjectContents = async () => {
-            const projectContents = await loadSavedProjects()
-            console.log("loaded saved projects", projectContents)
-            setProjects(projectContents)
-        }
-        // just call the function once after everything loaded. Before it would load also in the beginning
-        if (isSetUp) {
-            effectProjectContents().then()
-        }
-    }, [isSetUp])
+    // useEffect(() => {
+    //     const effectProjectContents = async () => {
+    //         const projectContents = await loadSavedProjects()
+    //         console.log("loaded saved projects", projectContents)
+    //         setProjects(projectContents)
+    //     }
+    //     // just call the function once after everything loaded. Before it would load also in the beginning
+    //     if (isSetUp) {
+    //         effectProjectContents().then()
+    //     }
+    // }, [isSetUp])
 
     //Updates the import and export directories
     useEffect(() => {
@@ -118,14 +126,19 @@ export const Export = () => {
     })
 
     const goToFile = logDecorator(async function goToFile(pageIndex)  {
-
+        // goes to the specified file in list based on index of it
         const currentDoc = app.activeDocument
-        setCurrentPageIndex(pageIndex)
         const newPageNum = projectFiles[pageIndex].pageNumber
-        setPageNumber(newPageNum)
+        const pageName = await getPageName(projectFiles[pageIndex])
         // Changes state of the Photoshop application, executeAsModal has to be used
         await core.executeAsModal(() => openFile(pageIndex))
         await core.executeAsModal(() => closeFile(currentDoc))
+        setCurrentPageIndex(pageIndex)
+        setPageNumber(newPageNum)
+        setCurrentPageName(pageName)
+        if (isStart) {
+            setIsStart(false)
+        }
 
     })
 
@@ -149,10 +162,6 @@ export const Export = () => {
                     setCurrentPageName(pageName)
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
-                    console.log("Save on Open: ", saveOnOpen)
-                    if (saveOnOpen) {
-                        await overwriteCheck(pageName)
-                    }
                 } else {
                     alert("Congratulation, you are done!")
                 }
@@ -165,9 +174,6 @@ export const Export = () => {
                     setCurrentPageName(pageName)
                     // Photoshop application state changed, so executeAsModal is used
                     await core.executeAsModal(() => closeFile(currentDoc))
-                    if (saveOnOpen) {
-                        await overwriteCheck(pageName)
-                    }
                 }
             }
             elementScrollToView().then()
@@ -206,13 +212,8 @@ export const Export = () => {
         if (projectFiles.length > 0) {
             await openNextFile(0)
             setIsStart(false)
-            console.log("Project files", projectFiles)
-            console.log("saveOnOpen", saveOnOpen)
             const pageName = await getPageName(projectFiles[0])
             setCurrentPageName(pageName)
-            if (saveOnOpen) {
-                await overwriteCheck(pageName)
-            }
         } else {
             alert("No files were loaded")
         }
@@ -224,13 +225,12 @@ export const Export = () => {
     })
 
     // gets the page name according to the template given in Naming panel
-    const getPageName = logDecorator(function getPageName(currentPage)  {
-
+    const getPageName = logDecorator(async function getPageName(currentPage)  {
+        // if there is no template, just use the normal page name
         if (namingTemplate.length < 1) {
-            const finalName = currentPage.name.replace(/\.[\w\d]+$/, "")
-            setCurrentPageName(finalName)
-            return
+            return currentPage.name.replace(/\.[\w\d]+$/, "")
         }
+        // if there is template, replace each specific pattern for it's part
         const originalNameAppend = namingTemplate.replaceAll("%og%", currentPage.name)
         const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
         const leadingZerosPattern = /%a\d+%/
@@ -238,7 +238,7 @@ export const Export = () => {
         while (leadingZerosPattern.test(leadingZerosAppend)) {
             const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
             const padLength = parseInt(match.substring(2, match.length - 1))
-            const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
+            const paddedNum = await addLeadingZeros(currentPage.pageNumber, padLength)
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
         return leadingZerosAppend.replace(/\.[\w\d]+$/, "")
@@ -426,7 +426,6 @@ export const Export = () => {
     })
 
     const loadProject = logDecorator(async function loadProject(projectName)  {
-
         const selectedProject = projects[projectName]
         setProjectFiles(selectedProject)
         dispatch(setFiles(selectedProject))

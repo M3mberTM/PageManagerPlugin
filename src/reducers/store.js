@@ -4,6 +4,8 @@ import templateSlice from "./templateSlice";
 import folderSlice from "./folderSlice";
 import helperSlice from "./helperSlice";
 import settingSlice from "./settingsSlice";
+import projectSlice from "./projectSlice";
+import presetSlice from "./presetSlice";
 
 const store = configureStore({
     reducer: {
@@ -12,6 +14,8 @@ const store = configureStore({
         folderSlice: folderSlice,
         helperSlice: helperSlice,
         settingsSlice: settingSlice,
+        projectSlice: projectSlice,
+        presetSlice: presetSlice
     },
 });
 
