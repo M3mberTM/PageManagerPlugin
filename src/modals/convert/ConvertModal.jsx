@@ -1,7 +1,7 @@
 import React from "react";
-import "../components/CommonStyles.css";
+import "../../components/CommonStyles.css";
 import {useState} from "react";
-import {getTruncatedString} from "../helpers/helper";
+import {getTruncatedString} from "../../utils/helper";
 import {storage} from 'uxp';
 
 const fs = storage.localFileSystem;

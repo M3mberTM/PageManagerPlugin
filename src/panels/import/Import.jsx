@@ -1,20 +1,20 @@
 import React from 'react';
 import {createRoot} from "react-dom";
-import {Section} from "../components/Section";
+import {Section} from "../../components/section/Section";
 import {useState, useEffect} from "react";
-import "../components/CommonStyles.css";
-import {setFiles} from "../reducers/fileSlice"
+import "../../components/CommonStyles.css";
+import {setFiles} from "../../redux/fileSlice"
 import {useDispatch, useSelector} from "react-redux";
-import {setImportFolder, setExportFolder, setShouldExport} from "../reducers/folderSlice";
-import {setIsFocused} from "../reducers/helperSlice";
-import {ConvertModal} from "../modals/ConvertModal";
-import {logDecorator} from "../helpers/Logger";
+import {setImportFolder, setExportFolder, setShouldExport} from "../../redux/folderSlice";
+import {setIsFocused} from "../../redux/helperSlice";
+import {ConvertModal} from "../../modals/convert/ConvertModal";
+import {logDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
-import {PATH_DELIMITER} from "../helpers/constants";
-import {ActionButton} from "../components/ActionButton";
-import {HighlightButton} from "../components/HighlightButton";
+import {PATH_DELIMITER} from "../../utils/constants";
+import {ActionButton} from "../../components/actionButton/ActionButton";
+import {HighlightButton} from "../../components/highlightButton/HighlightButton";
 
 const fs = storage.localFileSystem;
 const defaultFolderPath = "Path To Folder"

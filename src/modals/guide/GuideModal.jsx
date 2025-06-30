@@ -1,5 +1,5 @@
 import React from "react";
-import "../components/CommonStyles.css";
+import "../../components/CommonStyles.css";
 
 export const GuideModal = ({dialog}) => {
 

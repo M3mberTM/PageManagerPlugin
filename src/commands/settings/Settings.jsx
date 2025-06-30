@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
 import {storage} from 'uxp';
 
-import "../components/CommonStyles.css"
-import {SettingOption} from "../components/SettingOption";
-import {logDecorator} from "../helpers/Logger";
-import {SETTING_IDS, SETTINGS_FOLDER, SETTINGS_FILE, PATH_DELIMITER} from "../helpers/constants";
-import {setDocSaveOnOpen, setZeroNumbering, setSaveBetweenClose, setAllStates} from "../reducers/settingsSlice";
+import "../../components/CommonStyles.css"
+import {SettingOption} from "../../components/settingOption/SettingOption";
+import {logDecorator} from "../../utils/Logger";
+import {SETTING_IDS, SETTINGS_FOLDER, SETTINGS_FILE, PATH_DELIMITER} from "../../utils/constants";
+import {setDocSaveOnOpen, setZeroNumbering, setSaveBetweenClose, setAllStates} from "../../redux/settingsSlice";
 import {useDispatch, useSelector} from "react-redux";
-import {readFile, writeToFile} from "../helpers/helper";
-import {useSetUp} from "../helpers/presetManager";
+import {readFile, writeToFile} from "../../utils/helper";
+import {useSetUp} from "../../utils/presetManager";
 
 const fs = storage.localFileSystem;
 
@@ -17,7 +17,6 @@ export const Settings = ({dialog}) => {
     const dispatch = useDispatch()
     const settings = useSelector(state => state.settingsSlice)
     const settingsFile = `${SETTINGS_FOLDER}${PATH_DELIMITER}${SETTINGS_FILE}`
-    const isSetUp = useSelector(state => state.helperSlice.isSetUp)
     // useStates
     const [allSettings, setAllSettings] = useState(settings)
 
@@ -25,18 +24,6 @@ export const Settings = ({dialog}) => {
         setAllSettings(settings)
     }, [settings])
 
-    // useEffect(() => {
-    //     const loadSettings = async () => {
-    //         const dataFolder = await fs.getDataFolder()
-    //         const dataFolderPath = dataFolder.nativePath
-    //         const content = await readFile(`${dataFolderPath}${PATH_DELIMITER}${settingsFile}`)
-    //         dispatch(setAllStates(JSON.parse(content)))
-    //         setAllSettings(JSON.parse(content))
-    //     }
-    //     if (isSetUp) {
-    //         loadSettings().then()
-    //     }
-    // }, [isSetUp])
 
     const handleSetting = logDecorator(async function handleSetting (settingId, value) {
         let newSettings = {...settings}

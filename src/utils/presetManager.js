@@ -2,10 +2,10 @@ import {createDataFolderStruct, readFile} from "./helper";
 import {useDispatch} from "react-redux";
 import {storage} from 'uxp';
 import {PATH_DELIMITER, SETTINGS_FOLDER, SETTINGS_FILE, STORAGE_FOLDER, PROJECT_FILE, PRESET_FILE} from "./constants";
-import {setAllStates} from "../reducers/settingsSlice";
-import {setSavedProjects} from "../reducers/projectSlice";
+import {setAllStates} from "../redux/settingsSlice";
+import {setSavedProjects} from "../redux/projectSlice";
 import {clearLogs, logDecorator} from "./Logger";
-import {setPresets} from "../reducers/presetSlice";
+import {setPresets} from "../redux/presetSlice";
 
 const fs = storage.localFileSystem;
 // tells the program whether the initial loading of all preset files was called

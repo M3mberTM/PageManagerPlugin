@@ -1,28 +1,28 @@
 import React, {useEffect, useRef} from 'react';
-import {Section} from "../components/Section";
+import {Section} from "../../components/section/Section";
 import {useState} from "react";
-import "./Export.css";
-import "../components/CommonStyles.css";
-import {FileObject} from "../components/FileObject";
+import "./Movement.css";
+import "../../components/CommonStyles.css";
+import {FileObject} from "../../components/fileObject/FileObject";
 import {useSelector} from "react-redux";
 import {createRoot} from "react-dom";
-import {OverwriteModal} from "../modals/OverwriteModal";
-import {ProjectModal} from "../modals/ProjectModal";
+import {OverwriteModal} from "../../modals/overwrite/OverwriteModal";
+import {ProjectModal} from "../../modals/project/ProjectModal";
 import {useDispatch} from "react-redux";
-import {setFiles} from "../reducers/fileSlice";
-import {logDecorator} from "../helpers/Logger";
+import {setFiles} from "../../redux/fileSlice";
+import {logDecorator} from "../../utils/Logger";
 import {app} from "photoshop";
 import {core} from "photoshop";
 import {storage} from 'uxp';
-import {showAlert, entryExists, readFile, writeToFile} from "../helpers/helper";
-import {ActionButton} from "../components/ActionButton";
-import {HighlightButton} from "../components/HighlightButton";
-import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
-import {useSetUp} from "../helpers/presetManager";
+import {showAlert, entryExists, readFile, writeToFile} from "../../utils/helper";
+import {ActionButton} from "../../components/actionButton/ActionButton";
+import {HighlightButton} from "../../components/highlightButton/HighlightButton";
+import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
+import {useSetUp} from "../../utils/presetManager";
 
 const fs = storage.localFileSystem;
 
-export const Export = () => {
+export const Movement = () => {
     useSetUp()
     // states
     const [projectFiles, setProjectFiles] = useState([])
@@ -47,7 +47,6 @@ export const Export = () => {
     const dirs = useSelector((state) => state.folderSlice.value)
     const isFocus = useSelector(state => state.helperSlice.isFocused)
     const savedProjects = useSelector(state => state.projectSlice.savedProjects)
-    const isSetUp = useSelector(state => state.helperSlice.isSetUp)
 
     // disables buttons (is on when there is a file picker)
     useEffect(() => {
@@ -83,18 +82,6 @@ export const Export = () => {
         }
     }, [namingTemplate])
 
-    // Updates the saved projects list
-    // useEffect(() => {
-    //     const effectProjectContents = async () => {
-    //         const projectContents = await loadSavedProjects()
-    //         console.log("loaded saved projects", projectContents)
-    //         setProjects(projectContents)
-    //     }
-    //     // just call the function once after everything loaded. Before it would load also in the beginning
-    //     if (isSetUp) {
-    //         effectProjectContents().then()
-    //     }
-    // }, [isSetUp])
 
     //Updates the import and export directories
     useEffect(() => {

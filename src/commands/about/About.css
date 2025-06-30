@@ -1,0 +1,43 @@
+:root {
+    --highlight-color: #095aba;
+    --secondary-highlight-color: #117cf5;
+}
+
+.strong-text {
+    font-weight: bolder;
+}
+
+.italics {
+    font-style: italic;
+}
+
+.detailText {
+    margin-bottom: 0;
+    padding-top: 5px;
+}
+
+.detailValue {
+    margin-bottom: 0;
+}
+
+.pluginDetail {
+    padding-top: 5px;
+    padding-bottom: 10px;
+    display: flex;
+    width: 100%;
+    margin-bottom: 0;
+    flex-wrap: wrap;
+    background-color: var(--highlight-color);
+}
+
+.detailsSection {
+    display: block;
+}
+
+.pluginDetail:nth-child(even) {
+    background-color: var(--secondary-highlight-color);
+}
+
+.button-100 {
+    width: 100%;
+}

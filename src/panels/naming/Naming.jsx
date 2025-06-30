@@ -1,20 +1,19 @@
 import React from 'react';
 import "./Naming.css";
-import "../components/CommonStyles.css";
+import "../../components/CommonStyles.css";
 import {useState, useEffect} from "react";
-import {Section} from "../components/Section";
-import {setTemplate} from "../reducers/templateSlice";
+import {Section} from "../../components/section/Section";
+import {setTemplate} from "../../redux/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
-import {GuideModal} from "../modals/GuideModal";
-import {clearLogs, logDecorator} from "../helpers/Logger";
-import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../helpers/helper";
-import {ActionButton} from "../components/ActionButton";
+import {GuideModal} from "../../modals/guide/GuideModal";
+import {clearLogs, logDecorator} from "../../utils/Logger";
+import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../../utils/helper";
+import {ActionButton} from "../../components/actionButton/ActionButton";
 import {storage} from 'uxp';
-import {HighlightButton} from "../components/HighlightButton";
-import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../helpers/constants";
-import {setIsSetUp} from "../reducers/helperSlice";
-import {useSetUp} from "../helpers/presetManager";
+import {HighlightButton} from "../../components/highlightButton/HighlightButton";
+import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
+import {useSetUp} from "../../utils/presetManager";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
@@ -31,7 +30,6 @@ export const Naming = () => {
     const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`
     // selectors
     const isFocus = useSelector(state => state.helperSlice.isFocused)
-    const isSetUp = useSelector(state => state.helperSlice.isSetUp)
     const savedPresets = useSelector(state => state.presetSlice.presets)
 
     useEffect(() => {
@@ -42,28 +40,6 @@ export const Naming = () => {
         console.log("Saved presets: ", savedPresets)
         setPresets(savedPresets)
     }, [savedPresets])
-
-    // useEffect( () => {
-    //     // load the preset file saved before starting anything
-    //     const effectPresetContents = async () => {
-    //         const presetContents = await loadPresets()
-    //         console.log("loaded presets", presetContents)
-    //         setPresets(presetContents)
-    //     }
-    //     if (isSetUp) {
-    //         effectPresetContents().then()
-    //         // Clears the log folder so it only contains the last 4/5 days of logs
-    //         clearLogs().then()
-    //     }
-    // }, [isSetUp])
-
-    // useEffect(() => {
-    //     // Creates the data folder structure along with all the necessary files. Then it lets the other code know to run normal set up functions
-    //     createDataFolderStruct().then(() => {
-    //         dispatch(setIsSetUp(true))
-    //     })
-    // }, [])
-
 
     const applyTemplate = logDecorator(function applyTemplate(inputName)  {
         if (inputName.length < 1) {
@@ -84,7 +60,6 @@ export const Naming = () => {
         console.log('Applying pattern', inputName)
         setShownName(leadingZerosAppend)
         dispatch(setTemplate(inputName)) // sets to global variable
-
     })
 
     const openGuideDialog = logDecorator(async function openGuideDialog()  {

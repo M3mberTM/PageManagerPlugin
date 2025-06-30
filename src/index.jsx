@@ -2,14 +2,14 @@ import React from "react";
 
 import {PanelController} from "./controllers/PanelController.jsx";
 import {CommandController} from "./controllers/CommandController.jsx";
-import {About} from "./commands/About.jsx";
+import {About} from "./commands/about/About.jsx";
 import {entrypoints} from "uxp";
-import {Import} from "./panels/Import";
-import {Naming} from "./panels/Naming";
-import {Export} from "./panels/Export";
+import {Import} from "./panels/import/Import";
+import {Naming} from "./panels/naming/Naming";
+import {Movement} from "./panels/movement/Movement";
 import {Provider} from "react-redux";
-import store from "./reducers/store";
-import {Settings} from "./commands/Settings";
+import store from "./redux/store";
+import {Settings} from "./commands/settings/Settings";
 
 const aboutController = new CommandController(({dialog}) => <About dialog={dialog}/>, {
     id: "showAbout",
@@ -33,7 +33,7 @@ const namingController = new PanelController(() => <Provider store={store}><Nami
         {id: "reload5", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
 })
 
-const exportController = new PanelController(() => <Provider store={store}><Export/></Provider>, {
+const exportController = new PanelController(() => <Provider store={store}><Movement/></Provider>, {
     id: "export", menuItems: [
         {id: "reload6", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload()}]
 })

@@ -1,5 +1,5 @@
 import React from 'react';
-import "./CommonStyles.css";
+import "../CommonStyles.css";
 export const Section = ({children, isTransparent, bgColor, headingColor, sectionName}) => {
     const borderRadius = "3px";
 
