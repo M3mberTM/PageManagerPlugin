@@ -12,6 +12,7 @@ import {logDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
+import os from "os";
 import {PATH_DELIMITER} from "../../utils/constants";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
@@ -85,15 +86,7 @@ export const Import = () => {
         if (files.length < 1) {
             return
         }
-        const filteredFiles = files.filter((file)=> {
-            const fileName = file.name
-            const extension = fileName.substring(fileName.indexOf(".") + 1)
-            return allowedFileExtensions.includes(extension);
-        })
-        if (filteredFiles.length < 1) {
-            return
-        }
-        console.log(filteredFiles)
+
         const filePath = files[0].nativePath
         const folder= filePath.substring(0,filePath.lastIndexOf(PATH_DELIMITER))
         setter(await getTruncatedString(40, folder))
@@ -108,7 +101,7 @@ export const Import = () => {
 
         console.log("Import folder")
         const files = await getFiles(setter)
-
+        console.log(files)
         if (files === undefined) {
             return
         }
@@ -116,9 +109,13 @@ export const Import = () => {
             const entryName = entry.name
             return entry.isFile && entryName.substring(entryName.length-3) != "ini"
         })
-        dispatch(setFiles(allFiles.map((file, index) => {
+        // sorts the files the same way as windows explorer does
+        const collator = new Intl.Collator('en', {numeric: true, sensitivity: "base"})
+        allFiles.sort((a, b) => collator.compare(a.name, b.name))
+        const fileObjects = allFiles.map((file, index) => {
             return {filename: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
-        })))
+        })
+        dispatch(setFiles(fileObjects))
     })
 
     const getExportFolder = logDecorator(async function getExportFolder(setter)  {

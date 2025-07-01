@@ -39,7 +39,7 @@ export const useSetUp = () => {
             clearLogs().then(() => console.log("Cleared logs"))
         })
     } else {
-        console.log("Setup was already called!")
+        // console.log("Setup was already called!")
     }
 }
 

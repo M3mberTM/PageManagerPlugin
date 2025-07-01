@@ -7,8 +7,8 @@ import {setTemplate} from "../../redux/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
 import {GuideModal} from "../../modals/guide/GuideModal";
-import {clearLogs, logDecorator} from "../../utils/Logger";
-import {addLeadingZeros, createDataFolderStruct, readFile, writeToFile} from "../../utils/helper";
+import {logDecorator} from "../../utils/Logger";
+import {addLeadingZeros, readFile, writeToFile} from "../../utils/helper";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {storage} from 'uxp';
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
@@ -106,6 +106,9 @@ export const Naming = () => {
     })
 
     const deletePreset = logDecorator(async function deletePreset(template)  {
+        if (!template) {
+            return
+        }
         const filteredPresets = presets.filter((item) => {
             return item !== template
         })
