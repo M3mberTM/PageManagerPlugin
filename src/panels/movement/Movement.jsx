@@ -18,7 +18,6 @@ import {ActionButton} from "../../components/actionButton/ActionButton";
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
 import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
-import {current} from "@reduxjs/toolkit";
 
 const fs = storage.localFileSystem;
 
@@ -97,16 +96,16 @@ export const Movement = () => {
         const app = window.require("photoshop").app
         let fileEntry = null
         if (projectFiles[pageIndex].exportPath.length > 1) {
-            console.log(projectFiles[pageIndex].exportPath)
             fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].exportPath)
         } else {
             fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].filename)
         }
+        previousDoc.current = currentDoc.current
         currentDoc.current = await app.open(fileEntry)
         if (!previousDoc.current) {
             previousDoc.current = currentDoc.current
         }
-        console.log(currentDoc)
+        console.log("Document opened: ", currentDoc.current)
         if (settings.docSaveOnOpen) {
             console.log("Current file: ", projectFiles[pageIndex])
             const pageName = await getPageName(projectFiles[pageIndex])
@@ -184,7 +183,7 @@ export const Movement = () => {
 
     const closeFile = logDecorator(async function closeFile(document)  {
         await document.close()
-        previousDoc.current = currentDoc.current
+        console.log("Closed document ", document)
     })
 
     // Changes the file status to complete if not completed and vice versa
@@ -229,10 +228,8 @@ export const Movement = () => {
     const getPageName = logDecorator(async function getPageName(currentPage)  {
         // if there is no template, just use the normal page name
         if (namingTemplate.length < 1) {
-            console.log("is there naming template: No")
             return currentPage.name.replace(/\.[\w\d]+$/, "")
         }
-        console.log("Naming: ", currentPage)
         // if there is template, replace each specific pattern for it's part
         const originalNameAppend = namingTemplate.replaceAll("%og%", currentPage.name)
         const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
@@ -379,7 +376,6 @@ export const Movement = () => {
 
     const savePSD = logDecorator(async function savePSD(entry)  {
         try {
-            console.log("Saving as psd", entry)
             currentDoc.current.saveAs.psd(entry)
             return true
         } catch (e) {

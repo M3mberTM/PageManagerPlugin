@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import {createRoot} from "react-dom";
 import {Section} from "../../components/section/Section";
 import {useState, useEffect} from "react";
@@ -12,7 +12,6 @@ import {logDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
 import {app} from "photoshop";
 import {core} from "photoshop";
-import os from "os";
 import {PATH_DELIMITER} from "../../utils/constants";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
@@ -31,6 +30,9 @@ export const Import = () => {
     const dirFiles = useSelector(state => state.fileSlice.value)
     const isFocus = useSelector(state => state.helperSlice.isFocused)
     const dispatch = useDispatch()
+
+    const currentConvDoc = useRef(undefined)
+    const previousConvDoc = useRef(undefined)
 
     // Other helpful variables
     let convertDialog = null; // used for dialogs so that it can be accessed anywhere in code
@@ -77,7 +79,6 @@ export const Import = () => {
 
     const getFiles = logDecorator(async function getFiles (setter)  {
 
-        console.log("Getting files")
         let allowedFileExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb"])
         allowedFileExtensions = allowedFileExtensions.concat([allowedFileExtensions.join(";*.")])
         dispatch(setIsFocused(false))
@@ -99,15 +100,14 @@ export const Import = () => {
 
     const getImportFiles = logDecorator(async function getImportFiles (setter)  {
 
-        console.log("Import folder")
         const files = await getFiles(setter)
-        console.log(files)
         if (files === undefined) {
             return
         }
+        console.log("Imported files: ", files)
         const allFiles = files.filter(entry => {
             const entryName = entry.name
-            return entry.isFile && entryName.substring(entryName.length-3) != "ini"
+            return entry.isFile && entryName.substring(entryName.length-3) !== "ini"
         })
         // sorts the files the same way as windows explorer does
         const collator = new Intl.Collator('en', {numeric: true, sensitivity: "base"})
@@ -120,7 +120,6 @@ export const Import = () => {
 
     const getExportFolder = logDecorator(async function getExportFolder(setter)  {
 
-        console.log("Export folder")
         const folder = await getFolder(setter)
 
         if (folder === undefined) {
@@ -147,9 +146,7 @@ export const Import = () => {
     })
 
     const convertFiles = logDecorator(async function convertFiles (extension, folder)  {
-        console.log("Converting files")
-        console.log(`Extension: ${extension}`)
-        console.log(`Folder: ${folder}`)
+        console.log("Converting files. Extension: ", extension, " folder: ", folder)
 
         convertDialog.close()
         const folderEntry = await fs.getEntryWithUrl(folder)
@@ -194,7 +191,12 @@ export const Import = () => {
     })
 
     const openFile = logDecorator(async function openFile (entry)  {
-        await core.executeAsModal(async () => {await app.open(entry)})
+        await core.executeAsModal(async () => {
+            previousConvDoc.current = currentConvDoc.current
+            currentConvDoc.current = await app.open(entry)
+            if (!previousConvDoc.current) {
+                previousConvDoc.current = currentConvDoc.current
+            }})
     })
 
     const exportFile = logDecorator(async function exportFile (extension, folder)  {
@@ -239,12 +241,7 @@ export const Import = () => {
     })
 
     const closeCurrentFile = logDecorator(async function closeCurrentFile ()  {
-
-        const doc = app.activeDocument
-        console.log(doc)
-        await core.executeAsModal(async () => {await doc.close()})
-
-
+        await core.executeAsModal(async () => {await previousConvDoc.current.close()})
     })
 
     return <div id={"import"}>
