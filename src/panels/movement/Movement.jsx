@@ -105,11 +105,9 @@ export const Movement = () => {
         if (!previousDoc.current) {
             previousDoc.current = currentDoc.current
         }
-        console.log("Document opened: ", currentDoc.current)
+        console.log("Opened document: ", currentDoc.current)
         if (settings.docSaveOnOpen) {
-            console.log("Current file: ", projectFiles[pageIndex])
             const pageName = await getPageName(projectFiles[pageIndex])
-            console.log("Naming: ", pageName)
             if (projectFiles[pageIndex].exportPath.length < 1) {
                 await overwriteCheck(pageName)
             }
@@ -252,6 +250,9 @@ export const Movement = () => {
         const isSaved = await require('photoshop').core.executeAsModal(() => savePSD(entry))
         if (isSaved) {
             console.log("File was successfully saved", entry)
+            /* TODO rewrite either this function to not use currentPageIndex or redo all state variables differently
+            (currentPageIndex) doesn't get updated quickly enough to save the export path to the correct page
+             */
             const ogPage = projectFiles[currentPageIndex]
             const updatedPage = {...ogPage, exportPath: `${directories.exportDir}${PATH_DELIMITER}${saveName}`}
             const newFiles = projectFiles.map((item) => {
