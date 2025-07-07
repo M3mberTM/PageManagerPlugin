@@ -103,4 +103,19 @@ function logDecorator(fn) {
     }
 }
 
-export {info, warning, error, logToFile, logDecorator, clearLogs}
+function asyncLogDecorator(fn) {
+    return function(...args) {
+        let result;
+        try {
+            info(fn.name, args)
+            result = fn.call(this, ...args)
+        } catch (e) {
+            error(fn.name, args, e)
+            showAlert(fn.name)
+            showAlert(e)
+        }
+        return result
+    }
+}
+
+export {info, warning, error, logToFile, logDecorator, asyncLogDecorator, clearLogs}

@@ -9,7 +9,7 @@ import {createRoot} from "react-dom";
 import {OverwriteModal} from "../../modals/overwrite/OverwriteModal";
 import {ProjectModal} from "../../modals/project/ProjectModal";
 import {useDispatch} from "react-redux";
-import {setFiles} from "../../redux/fileSlice";
+// import {setFiles} from "../../redux/fileSlice";
 import {logDecorator} from "../../utils/Logger";
 import {core} from "photoshop";
 import {storage} from 'uxp';
