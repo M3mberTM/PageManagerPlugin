@@ -1,7 +1,5 @@
 import React, {useRef} from 'react';
-import {createRoot} from "react-dom";
 import {Section} from "../../components/section/Section";
-import {useState, useEffect} from "react";
 import "../../components/CommonStyles.css";
 import {useDispatch, useSelector} from "react-redux";
 import {setImportDir, setExportDir, setShouldExport, setFiles} from "../../redux/fileSystemSlice";
@@ -35,9 +33,6 @@ export const Import = () => {
 
     const currentDoc = useRef(undefined)
     const previousDoc = useRef(undefined)
-
-    // Other helpful variables
-    let convertDialog = null; // used for dialogs so that it can be accessed anywhere in code
 
     const importFiles = logDecorator(async function importFiles ()  {
 
