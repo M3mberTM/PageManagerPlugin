@@ -12,16 +12,11 @@ const fs = storage.localFileSystem;
 let wasSetUp = false
 
 export const useSetUp = () => {
-    /*
-        First, call function to setup folders and populate them
-        After, load presets and dispatch them.
-        After, load projects and dispatch them properly
-        After, load settings and dispatch them properly
-     */
+    // Custom hook for initial setup when loading
+    const dispatch = useDispatch() // for some fucking reason, i need to define this here otherwise I am breaking rules of hooks or whatever bla bla
     if (!wasSetUp) {
         wasSetUp = true
         console.log("Doing set up")
-        const dispatch = useDispatch()
         // creates the necessary folders and files if they weren't created yet
         createDataFolderStruct().then(() => {
             loadSettings().then((settings)=> {

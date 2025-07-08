@@ -103,7 +103,7 @@ function logDecorator(fn) {
     }
 }
 
-function asyncLogDecorator(fn) {
+function syncLogDecorator(fn) {
     return function(...args) {
         let result;
         try {
@@ -118,4 +118,4 @@ function asyncLogDecorator(fn) {
     }
 }
 
-export {info, warning, error, logToFile, logDecorator, asyncLogDecorator, clearLogs}
+export {info, warning, error, logToFile, logDecorator, syncLogDecorator, clearLogs}

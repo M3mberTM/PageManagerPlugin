@@ -1,5 +1,7 @@
 import {storage} from 'uxp';
 import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER} from "./constants";
+import {createRoot} from "react-dom/client";
+import React from "react";
 
 const fs = storage.localFileSystem;
 const DEFAULT_PRESET_VAL = {presets: []}
@@ -132,4 +134,29 @@ export const getTruncatedString = (maxLength, text) => {
     } catch (e) {
        showAlert(e)
     }
+}
+
+// connected to spawnDialog method
+let dialog = null
+export const spawnDialog = async (dialogElement, title) => {
+
+    if (!dialog) {
+        dialog = document.createElement("dialog")
+        dialog.style.padding = "1rem"
+
+        const root = createRoot(dialog)
+        const adjustedElement = React.cloneElement(dialogElement, {dialog: dialog})
+        root.render(adjustedElement)
+    }
+    // thankfully, Photoshop disables the ability to interact with the client until the dialog is gone. No need to worry
+    document.body.appendChild(dialog)
+
+    dialog.onclose = () => {
+        dialog.remove()
+        dialog = null
+    }
+
+    await dialog.uxpShowModal({
+        title: title,
+    })
 }

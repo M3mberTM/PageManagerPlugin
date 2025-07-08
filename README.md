@@ -13,4 +13,7 @@ also characters that Windows doesn't recommend
 ## Special thanks
 
 ### Testers
-@ru - helping me find the unsupported symbols in file paths
+@ru - helping me find the unsupported symbols in file paths<br/>
+@adrian - my mac tester<br/>
+@Writer - testing and moral support<br/>
+@Ryujin1108 - suggesting new features and testing

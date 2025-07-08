@@ -10,7 +10,7 @@ const store = configureStore({
     reducer: {
         fileSystem: fileSystemSlice,
         templateSlice: templateSlice,
-        helperSlice: helperSlice,
+        helper: helperSlice,
         settingsSlice: settingSlice,
         projectSlice: projectSlice,
         presetSlice: presetSlice

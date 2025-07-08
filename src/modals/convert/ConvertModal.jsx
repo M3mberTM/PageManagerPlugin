@@ -6,7 +6,8 @@ import {storage} from 'uxp';
 
 const fs = storage.localFileSystem;
 
-export const ConvertModal = ({dialog, convert}) => {
+// todo replace all sp-dropdown elements with sp-picker instead
+export const ConvertModal = ({dialog, convertFiles}) => {
     const [extension, setExtension] = useState("")
     const [exportFolder, setExportFolder] = useState("")
     const [shownExportFolder, setShownExportFolder] = useState("")
@@ -32,7 +33,7 @@ export const ConvertModal = ({dialog, convert}) => {
             alert("No extension selected")
             return
         }
-        convert(extension, exportFolder)
+        convertFiles(extension, exportFolder)
     }
 
     return (
