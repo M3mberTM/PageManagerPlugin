@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import {Section} from "../../components/section/Section";
 import "../../components/CommonStyles.css";
 import {useDispatch, useSelector} from "react-redux";
@@ -7,7 +7,6 @@ import {setIsFocused} from "../../redux/helperSlice";
 import {ConvertModal} from "../../modals/convert/ConvertModal";
 import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
-import {app, core} from "photoshop";
 import {PATH_DELIMITER} from "../../utils/constants";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
@@ -31,8 +30,6 @@ export const Import = () => {
 
     const dispatch = useDispatch()
 
-    const currentDoc = useRef(undefined)
-    const previousDoc = useRef(undefined)
 
     const importFiles = logDecorator(async function importFiles ()  {
 
@@ -106,96 +103,10 @@ export const Import = () => {
             alert("No files are loaded!")
             return
         }
-        await spawnDialog(<ConvertModal convertFiles={convertFiles}/>, 'Convert project')
+        await spawnDialog(<ConvertModal loadedFiles={loadedFiles}/>, 'Convert project')
     })
 
-    // consider moving these methods into the dialog
-    const convertFiles = logDecorator(async function convertFiles (extension, folderEntry)  {
-        console.group("=====CONVERTING FILES=====")
-        console.log("Extension: ", extension)
-        console.log("Folder: ", folderEntry)
-
-        const filenames = loadedFiles.map((item) => {
-            return item.filePath
-        })
-        const fileEntries = await getEntries(filenames)
-        // Main conversion functionality (opening, saving, closing)
-        for (let i = 0; i < fileEntries.length; i++) {
-            await openFile(fileEntries[i])
-            await exportFile(extension, folderEntry)
-            await closeCurrentFile()
-        }
-        console.groupEnd()
-
-    })
-
-    const getEntries = syncLogDecorator(function getEntries (filePaths)  {
-        const promises = filePaths.map(async (item) => {
-            return fs.getEntryWithUrl(item)
-        })
-        return Promise.all(promises)
-    })
-
-
-    const openFile = logDecorator(async function openFile (entry)  {
-        /*
-        Adobe Documentation:
-        ExecuteAsModal is needed when a plugin wants to make modifications to the Photoshop state.
-        This includes scenarios where the plugin wants to create or modify documents, or the plugin wants to update UI or preference state.
-         */
-        await core.executeAsModal(async () => {
-            previousDoc.current = currentDoc.current
-            currentDoc.current = await app.open(entry)
-            if (!previousDoc.current) {
-                previousDoc.current = currentDoc.current
-            }})
-    })
-
-    const exportFile = logDecorator(async function exportFile (extension, folder)  {
-
-        switch (extension) {
-            case "png":
-                await savePng(folder)
-                break
-            case "jpg":
-                await saveJpg(folder)
-                break
-            default:
-                console.log("Unknown extension")
-                break
-        }
-    })
-    // TODO redo all of the functionality underneath this
-
-
-
-
-    const savePng = logDecorator(async function savePng (folder)  {
-        // put png options here
-        const pngOptions = {interlaced: false}
-
-        const doc = app.activeDocument
-        const fileName = doc.name.replace(/\.\w+$/, "")
-        const entry = await folder.createFile(`${fileName}.png`, {overwrite: true})
-        await core.executeAsModal(async () => {await doc.saveAs.png(entry, pngOptions)})
-
-    })
-
-    const saveJpg = logDecorator(async function saveJpg (folder)  {
-        // put jpg options here
-        const jpgOptions = {quality: 12}
-
-        const doc = app.activeDocument
-        const fileName = doc.name.replace(/\.\w+$/, "")
-        const entry = await folder.createFile(`${fileName}.jpg`, {overwrite: true})
-        await core.executeAsModal(async () => {await doc.saveAs.jpg(entry, jpgOptions)})
-
-    })
-
-    const closeCurrentFile = logDecorator(async function closeCurrentFile ()  {
-        await core.executeAsModal(async () => {await previousDoc.current.close()})
-    })
-
+    // visual logic
     const shownImportDir = importDir.length < 1 ? dirPlaceholder : getTruncatedString(30, importDir)
     let shownExportDir = 'Disabled'
     if (shouldExport) {
