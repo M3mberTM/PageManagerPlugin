@@ -1,6 +1,6 @@
 import React from "react";
 
-import "../CommonStyles.css"
+import "../../CommonStyles.css"
 
 export const HighlightButton = ({style, clickHandler, children, classHandle, isDisabled}) => {
     if (isDisabled) {

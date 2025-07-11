@@ -3,9 +3,8 @@ import {useDispatch} from "react-redux";
 import {storage} from 'uxp';
 import {PATH_DELIMITER, SETTINGS_FOLDER, SETTINGS_FILE, STORAGE_FOLDER, PROJECT_FILE, PRESET_FILE} from "./constants";
 import {setAllStates} from "../redux/settingsSlice";
-import {setSavedProjects} from "../redux/projectSlice";
 import {clearLogs, logDecorator} from "./Logger";
-import {setPresets} from "../redux/presetSlice";
+import {setSavedNamingPatterns, setSavedProjects} from "../redux/presetSlice";
 
 const fs = storage.localFileSystem;
 // tells the program whether the initial loading of all preset files was called
@@ -28,7 +27,7 @@ export const useSetUp = () => {
                 console.log("Loaded saved projects: ", projects)
             })
             loadPresets().then((presets) => {
-                dispatch(setPresets(presets))
+                dispatch(setSavedNamingPatterns(presets))
                 console.log("Loaded saved presets: ", presets)
             })
             clearLogs().then(() => console.log("Cleared logs"))
@@ -58,5 +57,5 @@ const loadPresets = logDecorator(async function loadPresets() {
     const dataFolder = await fs.getDataFolder()
     const dataFolderPath = dataFolder.nativePath
     const presetContents = await readFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`)
-    return JSON.parse(presetContents).presets
+    return JSON.parse(presetContents)
 })

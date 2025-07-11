@@ -1,47 +1,36 @@
 import React from 'react';
 import "./Naming.css";
-import "../../components/CommonStyles.css";
-import {useState, useEffect} from "react";
+import "../../CommonStyles.css";
 import {Section} from "../../components/section/Section";
-import {setTemplate} from "../../redux/templateSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {createRoot} from "react-dom/client";
 import {GuideModal} from "../../modals/guide/GuideModal";
-import {logDecorator} from "../../utils/Logger";
-import {addLeadingZeros, readFile, writeToFile} from "../../utils/helper";
+import {logDecorator, syncLogDecorator} from "../../utils/Logger";
+import {addLeadingZeros, readFile, spawnDialog, writeToFile, writeToPresetFile} from "../../utils/helper";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {storage} from 'uxp';
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
 import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
+import {setNamingPattern} from "../../redux/namingSlice";
+import {saveNamingPattern} from "../../redux/presetSlice";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
     useSetUp()
     const exampleFilename = "FileName001"
     const exampleFileNumber = 1
-    // state vars
-    const [shownName, setShownName] = useState("")
-    const [presets, setPresets] = useState([])
-    const [isPanelFocused, setIsPanelFocused] = useState(true)
-    // other helpful vars
+
     const dispatch = useDispatch()
-    let guideDialog = null;
-    const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`
-    // selectors
-    const isFocus = useSelector(state => state.helperSlice.isFocused)
-    const savedPresets = useSelector(state => state.presetSlice.presets)
+    const presetSlicer = useSelector((state) => state.presets)
+    const utilSlicer = useSelector((state) => state.utils)
+    const namingSlicer = useSelector((state) => state.naming)
 
-    useEffect(() => {
-        setIsPanelFocused(isFocus)
-    }, [isFocus])
+    const isFocused = utilSlicer.isFocused
+    const savedNamingPatterns = presetSlicer.savedNamingPatterns
+    const namingPattern = namingSlicer.namingPattern
 
-    useEffect(() => {
-        console.log("Saved presets: ", savedPresets)
-        setPresets(savedPresets)
-    }, [savedPresets])
-
-    const applyTemplate = logDecorator(function applyTemplate(inputName)  {
+    const applyTemplate = syncLogDecorator(function applyTemplate(inputName)  {
         if (inputName.length < 1) {
             alert("Template is empty")
             return
@@ -56,33 +45,32 @@ export const Naming = () => {
             const paddedNum = addLeadingZeros(exampleFileNumber, padLength)
             leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
         }
+        return leadingZerosAppend
+    })
 
-        console.log('Applying pattern', inputName)
-        setShownName(leadingZerosAppend)
-        dispatch(setTemplate(inputName)) // sets to global variable
+    const setTemplate = syncLogDecorator(function setTemplate(template) {
+        console.log('Setting naming pattern: ', template)
+        dispatch(setNamingPattern(template))
+    })
+
+    const savePattern = logDecorator(async function savePattern(pattern)  {
+        if (pattern.length < 1) {
+            alert("No pattern was inputted")
+            return
+        }
+        const newPatterns = savedNamingPatterns.concat(pattern)
+        const isPatternSaved = await writeToPresetFile(newPatterns)
+        if (isPatternSaved) {
+            dispatch(saveNamingPattern(pattern))
+        }
     })
 
     const openGuideDialog = logDecorator(async function openGuideDialog()  {
-        // WTF is this even. There has to be a better way of doing this but I am too lazy to look for the information
-        if (!guideDialog) {
-            guideDialog = document.createElement("dialog")
-            guideDialog.style.padding = "1rem"
-
-            const root = createRoot(guideDialog)
-            root.render(<GuideModal dialog={guideDialog}/>)
-        }
-        document.body.appendChild(guideDialog)
-
-        guideDialog.onclose = () => {
-            guideDialog.remove()
-            guideDialog = null
-        }
-
-        await guideDialog.uxpShowModal({
-            title: "Template guide",
-        })
-
+        await spawnDialog(<GuideModal/>, 'Template Guide')
     })
+
+    // todo refactor all functionality underneath this
+
 
     const loadPresets = logDecorator(async function loadPresets() {
         const dataFolder = await fs.getDataFolder()
@@ -92,18 +80,6 @@ export const Naming = () => {
     })
 
 
-    const savePreset = logDecorator(async function savePreset()  {
-        const inputVal = document.getElementById("template-input").value
-        if (inputVal.length < 1) {
-            alert("No preset was inputted")
-            return
-        }
-        const dataFolder = await fs.getDataFolder()
-        const dataFolderPath = dataFolder.nativePath
-        const newPresets = presets.concat(inputVal)
-        setPresets(newPresets)
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify({presets: newPresets}))
-    })
 
     const deletePreset = logDecorator(async function deletePreset(template)  {
         if (!template) {
@@ -131,19 +107,17 @@ export const Naming = () => {
         applyTemplate(template).then()
 
     })
-
-
+    const shownName = namingPattern.length < 1 ? exampleFilename : applyTemplate(namingPattern)
     return <div id={"naming"}>
-        {/*Heading*/}
         <Section sectionName={"Naming"} isTransparent={true}>
-            <sp-heading size={"XXS"}>{shownName.length < 1 ? "FileName001" : shownName}</sp-heading>
+            <sp-heading size={"XXS"}>{shownName}</sp-heading>
             <sp-textfield class={"button-100"} id={"template-input"} placeholder={"Placeholder"}></sp-textfield>
             <ActionButton classHandle={"button-100"} clickHandler={() => {
-                applyTemplate(document.getElementById("template-input").value).then()
-            }} isDisabled={!isPanelFocused}>Apply
+                setTemplate(document.getElementById('template-input').value)
+            }} isDisabled={!isFocused}>Apply
             </ActionButton>
-            <ActionButton classHandle={"button-100"} clickHandler={savePreset} isDisabled={!isPanelFocused}>Save preset</ActionButton>
-            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={openGuideDialog} isDisabled={!isPanelFocused}>Guide</HighlightButton>
+            <ActionButton classHandle={"button-100"} clickHandler={() => savePattern(document.getElementById('template-input').value)} isDisabled={!isFocused}>Save preset</ActionButton>
+            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={openGuideDialog} isDisabled={!isFocused}>Guide</HighlightButton>
         </Section>
 
         <Section isTransparent={true} sectionName={"Presets"}>
@@ -151,16 +125,16 @@ export const Naming = () => {
                 <div class={"fit-row-style"}>
                     <sp-picker class={"button-100"} placeholder={"Choose a selection..."}>
                         <sp-menu slot={"options"} id={"saved-templates"}>
-                            {presets.map((item, index) => {
+                            {savedNamingPatterns.map((item, index) => {
                                 return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
                             })}
                         </sp-menu>
                     </sp-picker>
-                    <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isPanelFocused}>Delete
+                    <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isFocused}>Delete
                     </ActionButton>
                     <HighlightButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
                         applyPreset(document.getElementById("saved-templates").value).then()
-                    }} isDisabled={!isPanelFocused}>Load
+                    }} isDisabled={!isFocused}>Load
                     </HighlightButton>
                 </div>
             </div>

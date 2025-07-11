@@ -1,47 +1,73 @@
 import React from "react";
-import "../../components/CommonStyles.css";
+import "../../CommonStyles.css";
+import Explanation from "../../components/typography/Explanation";
+import Strong from "../../components/typography/Strong";
+import Table from "../../components/typography/Table";
+import TableRow from "../../components/typography/TableRow";
+import TableHeading from "../../components/typography/TableHeading";
+import TableColumn from "../../components/typography/TableColumn";
 
 export const GuideModal = ({dialog}) => {
 
     return (
-        <div style={{width: "600px"}}>
-            <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-                <sp-heading style={{marginTop: 0}}>Simple guide for Template making</sp-heading>
-                <sp-body>
-                    Not sure how to make a template or even what a template is? I'm here to help. Templates are a piece of text that allow the plugin to save files
-                    using a naming scheme. This means that each file will look similar, however it will have small changes between each individual files. For example
-                    page numbers. They change for each file, however the series name stays the same. Templates allow you make such simple changes between files
-                    without having to write all of the file names individually. Now, let's go over some of the main functions and how they work. Don't feel afraid
-                    to play around setting different templates before deciding on the final one.
-                    <span class={"strong-text"}>
-                        Keep in mind that not using any functions may result in files that overwrite each other when saved as they will end up with the same names!!!
-                    </span>
+        <div style={{width: "600px", height: "800px", overflowY: 'scroll'}}>
+            <div style={{width: '90%', margin: 'auto'}}>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                    <sp-heading style={{marginTop: 0}} size={'L'}>Simple guide for Template making</sp-heading>
+                    <sp-divider style={{backgroundColor: 'white', marginTop: '5px', marginBottom: '10px'}}></sp-divider>
+                    <sp-body>
+                        Templates are text, which contain special "text" that allows you to have different results based on specific files.<br/>
+                        <br/>
+                        This means that you don't have to name each file separately if you want to stay organized. Instead, you can make one template, and it will
+                        automatically create a name for each file based on it's characteristics. One such example could be page numbers. Page numbers are different
+                        from file to file. Normally you would have to write each page number for each file. With templates, you write it ONCE!!!<br/>
+                        <br/>
+                        <Strong>Interested? Well, here is a guide on how to.</Strong>
+                    </sp-body>
+                    <sp-heading size={'M'}>Explanation</sp-heading>
+                    <sp-body>
+                        Unlike normal naming, templates use <Strong>Variables.</Strong> Variables are special text, which changes from file to file. They are surrounded
+                        by % symbols. These variables are replaced by another piece of text when they are used later. An example of template with variables is provided
+                        below:
+                        <Explanation>Sword_demon_p%a3% => Sword_demon_p001</Explanation>
+                        In this case, we are using the <Strong>Leading zeros page number.</Strong>It means that it will add zeros to the beginning of the page number,
+                        until the length of the page number is equal to the number 3 in this case. There are multiple different variables you can use. We will discuss
+                        them in the next section.
+                    </sp-body>
+                    <sp-heading size={'M'}>Documentation</sp-heading>
                     <br/>
-                    <br/>
-                    Each template function is surrounded by percentage signs (%) so that the plugin knows it is a function. Below are the possible functions you can
-                    call at this moment!
-
-                </sp-body>
-                <br/>
-                <div class={"table-style"}>
-                    <div class={"row-header-style"}>
-                        <sp-heading size={"XS"} class={"col-style text-center col-right-border width-50"}>Command</sp-heading>
-                        <sp-heading size={"XS"} class={"col-style text-center width-50"}>Explanation</sp-heading>
-                    </div>
-                    <div class={"row-style"}>
-                        <sp-body class={"col-style col-right-border width-50"}>og</sp-body>
-                        <sp-body class={"col-style width-50 left-pad"}>Takes the original file name</sp-body>
-                    </div>
-                    <div class={"row-style"}>
-                        <sp-body class={"col-style col-right-border width-50"}>num</sp-body>
-                        <sp-body class={"col-style width-50 left-pad"}>Writes the page number (Page numbers start at 1 from the first file in the folder. You can
-                        adjust this in the movement tab though.</sp-body>
-                    </div>
-                    <div className={"row-style"}>
-                        <sp-body class={"col-style col-right-border width-50"}>an</sp-body>
-                        <sp-body class={"col-style width-50 left-pad"}>Writes the page number with leading zeros (replace the character n with the number of
-                            leading zeros you want in the page number. Example. a3 will give 001 for page number 1)
-                        </sp-body>
+                    <Table>
+                        <TableRow>
+                            <TableHeading>Command</TableHeading>
+                            <TableHeading>Usage</TableHeading>
+                            <TableHeading>Explanation</TableHeading>
+                        </TableRow>
+                        <TableRow>
+                            <TableColumn>og</TableColumn>
+                            <TableColumn>%og%</TableColumn>
+                            <TableColumn>Original file name</TableColumn>
+                        </TableRow>
+                    </Table>
+                    <div class={"table-style"}>
+                        <div class={"row-header-style"}>
+                            <sp-heading size={"XS"} class={"col-style text-center col-right-border width-50"}>Command</sp-heading>
+                            <sp-heading size={"XS"} class={"col-style text-center width-50"}>Explanation</sp-heading>
+                        </div>
+                        <div class={"row-style"}>
+                            <sp-body class={"col-style col-right-border width-50"}>og</sp-body>
+                            <sp-body class={"col-style width-50 left-pad"}>Takes the original file name</sp-body>
+                        </div>
+                        <div class={"row-style"}>
+                            <sp-body class={"col-style col-right-border width-50"}>num</sp-body>
+                            <sp-body class={"col-style width-50 left-pad"}>Writes the page number (Page numbers start at 1 from the first file in the folder. You can
+                                adjust this in the movement tab though.</sp-body>
+                        </div>
+                        <div className={"row-style"}>
+                            <sp-body class={"col-style col-right-border width-50"}>an</sp-body>
+                            <sp-body class={"col-style width-50 left-pad"}>Writes the page number with leading zeros (replace the character n with the number of
+                                leading zeros you want in the page number. Example. a3 will give 001 for page number 1)
+                            </sp-body>
+                        </div>
                     </div>
                 </div>
             </div>

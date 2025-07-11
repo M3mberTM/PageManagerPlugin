@@ -2,7 +2,7 @@ import React, {useEffect, useRef} from 'react';
 import {Section} from "../../components/section/Section";
 import {useState} from "react";
 import "./Movement.css";
-import "../../components/CommonStyles.css";
+import "../../CommonStyles.css";
 import {FileObject} from "../../components/fileObject/FileObject";
 import {useSelector} from "react-redux";
 import {createRoot} from "react-dom";

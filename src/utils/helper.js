@@ -1,10 +1,10 @@
 import {storage} from 'uxp';
-import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER} from "./constants";
+import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER, PRESET_FILE, PROJECT_FILE, SETTINGS_FILE} from "./constants";
 import {createRoot} from "react-dom/client";
 import React from "react";
 
 const fs = storage.localFileSystem;
-const DEFAULT_PRESET_VAL = {presets: []}
+const DEFAULT_PRESET_VAL = []
 const DEFAULT_PROJECTS_VAL = {}
 const DEFAULT_SETTINGS_VAL = {saveBetweenClose: false, docSaveOnOpen: false, zeroNumbering: true}
 
@@ -59,22 +59,22 @@ const populateDataFolders = async () => {
         console.log("==========Populating data folders==========")
         const dataFolder = await fs.getDataFolder()
         const folderPrefix = `${dataFolder.nativePath}${PATH_DELIMITER}`
-        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}presets.json`)) {
+        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`)) {
             console.info("-----No presets.json found. Creating presets.json-----")
             const storageFolder = await fs.getEntryWithUrl(`${folderPrefix}${STORAGE_FOLDER}`)
-            const presetFile  = await storageFolder.createFile("presets.json")
+            const presetFile  = await storageFolder.createFile(PRESET_FILE)
             await presetFile.write(JSON.stringify(DEFAULT_PRESET_VAL))
         }
-        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}projects.json`)) {
+        if (!await entryExists(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}${PROJECT_FILE}`)) {
             console.info("-----No projects.json found. Creating projects.json-----")
             const storageFolder = await fs.getEntryWithUrl(`${folderPrefix}${STORAGE_FOLDER}`)
-            const presetFile  = await storageFolder.createFile("projects.json")
+            const presetFile  = await storageFolder.createFile(PROJECT_FILE)
             await presetFile.write(JSON.stringify(DEFAULT_PROJECTS_VAL))
         }
-        if (!await entryExists(`${folderPrefix}${SETTINGS_FOLDER}${PATH_DELIMITER}settings.json`)) {
+        if (!await entryExists(`${folderPrefix}${SETTINGS_FOLDER}${PATH_DELIMITER}${SETTINGS_FILE}`)) {
             console.info("-----No settings.json found. Creating settings.json-----")
             const settingsFolder = await fs.getEntryWithUrl(`${folderPrefix}${SETTINGS_FOLDER}`)
-            const presetFile  = await settingsFolder.createFile("settings.json")
+            const presetFile  = await settingsFolder.createFile(SETTINGS_FILE)
             await presetFile.write(JSON.stringify(DEFAULT_SETTINGS_VAL))
         }
     } catch(e) {
@@ -96,6 +96,20 @@ export const writeToFile = async (filePath, content) => {
         await fileEntry.write(content, {append: false})
         return true
     } catch (e) {
+        showAlert(e)
+        return false
+    }
+}
+
+export const writeToPresetFile = async (content) => {
+    try {
+        const dataFolder = await fs.getDataFolder()
+        const folderPrefix = `${dataFolder.nativePath}${PATH_DELIMITER}`
+        const presetFile = await fs.getEntryWithUrl(`${folderPrefix}${STORAGE_FOLDER}${PATH_DELIMITER}${PRESET_FILE}`)
+        await presetFile.write(JSON.stringify(content))
+        return true
+    } catch (e) {
+        alert('something went wrong')
         showAlert(e)
         return false
     }
@@ -139,7 +153,7 @@ export const getTruncatedString = (maxLength, text) => {
 // connected to spawnDialog method
 let dialog = null
 export const spawnDialog = async (dialogElement, title) => {
-
+    // there must be a better way of doing this but I couldn't find it
     if (!dialog) {
         dialog = document.createElement("dialog")
         dialog.style.padding = "1rem"

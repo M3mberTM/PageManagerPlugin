@@ -1,5 +1,4 @@
 import React from "react";
-
 import {PanelController} from "./controllers/PanelController.jsx";
 import {CommandController} from "./controllers/CommandController.jsx";
 import {About} from "./commands/about/About.jsx";

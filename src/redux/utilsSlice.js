@@ -1,6 +1,6 @@
 import {createSlice} from '@reduxjs/toolkit';
 
-const helperSlice = createSlice({
+const utilsSlice = createSlice({
     name: 'helperSlicer',
     initialState: {isSetUp: false, isFocused: true},
     reducers: {
@@ -10,6 +10,6 @@ const helperSlice = createSlice({
     },
 });
 
-export const {setIsFocused} = helperSlice.actions;
+export const {setIsFocused} = utilsSlice.actions;
 
-export default helperSlice.reducer;
+export default utilsSlice.reducer;

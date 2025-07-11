@@ -1,5 +1,5 @@
 import React from "react";
-import "../../components/CommonStyles.css";
+import "../../CommonStyles.css";
 
 export const ProjectModal = ({dialog, files, saveProject}) => {
 

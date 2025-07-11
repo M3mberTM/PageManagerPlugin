@@ -1,19 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
-import templateSlice from "./templateSlice";
-import helperSlice from "./helperSlice";
+import utilsSlice from "./utilsSlice";
 import settingSlice from "./settingsSlice";
-import projectSlice from "./projectSlice";
-import presetSlice from "./presetSlice";
 import fileSystemSlice from "./fileSystemSlice";
+import namingSlice from './namingSlice'
+import presetSlice from './presetSlice'
 
 const store = configureStore({
     reducer: {
         fileSystem: fileSystemSlice,
-        templateSlice: templateSlice,
-        helper: helperSlice,
-        settingsSlice: settingSlice,
-        projectSlice: projectSlice,
-        presetSlice: presetSlice
+        utils: utilsSlice,
+        settings: settingSlice,
+        naming: namingSlice,
+        presets: presetSlice,
     },
 });
 

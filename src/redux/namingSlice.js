@@ -5,10 +5,10 @@ const namingSlice = createSlice({
     initialState: {namingPattern: ""},
     reducers: {
         setNamingPattern: (state, action) => {
-            state.value = action.payload;
+            state.namingPattern = action.payload;
         },
     },
-});
+})
 
 export const {setNamingPattern} = namingSlice.actions;
 

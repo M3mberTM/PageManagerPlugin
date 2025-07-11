@@ -1,9 +1,9 @@
 import React from 'react';
 import {Section} from "../../components/section/Section";
-import "../../components/CommonStyles.css";
+import "../../CommonStyles.css";
 import {useDispatch, useSelector} from "react-redux";
 import {setImportDir, setExportDir, setShouldExport, setFiles} from "../../redux/fileSystemSlice";
-import {setIsFocused} from "../../redux/helperSlice";
+import {setIsFocused} from "../../redux/utilsSlice";
 import {ConvertModal} from "../../modals/convert/ConvertModal";
 import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
@@ -18,7 +18,7 @@ export const Import = () => {
     useSetUp()
 
     const dirPlaceholder = 'Path to folder'
-    const helperSlicer = useSelector((state) => state.helper)
+    const utilSlicer = useSelector((state) => state.utils)
     const fsSlicer = useSelector((state) => state.fileSystem)
 
     const importDir = fsSlicer.importDir
@@ -26,7 +26,7 @@ export const Import = () => {
     const shouldExport = fsSlicer.shouldExport
     const loadedFiles = fsSlicer.files
 
-    const isFocused = helperSlicer.isFocused
+    const isFocused = utilSlicer.isFocused
 
     const dispatch = useDispatch()
 

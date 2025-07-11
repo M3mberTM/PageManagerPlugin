@@ -2,14 +2,32 @@ import {createSlice} from '@reduxjs/toolkit';
 
 const presetSlice = createSlice({
     name: 'presetSlicer',
-    initialState: {presets: []},
+    initialState: {savedProjects: [], savedNamingPatterns: []},
     reducers: {
-        setPresets: (state, action) => {
-            state.presets = action.payload;
+        setSavedProjects: (state, action) => {
+            state.savedProjects = action.payload;
         },
+        setSavedNamingPatterns: (state, action) => {
+            state.savedNamingPatterns = action.payload;
+        },
+        saveProject: (state, action) => {
+            state.savedProjects = state.savedProjects.concat(action.payload)
+        },
+        saveNamingPattern: (state, action) => {
+            state.savedNamingPatterns = state.savedNamingPatterns.concat(action.payload)
+        },
+        removeNamingPattern: (state, action) => {
+            state.savedNamingPatterns = state.savedNamingPatterns.filter((np) => np !== action.payload)
+        },
+        removeProject: (state, action) => {
+            // implement removeProject method
+            state.savedProjects = action.payload
+        }
     },
 });
 
-export const {setPresets} = presetSlice.actions;
+export const {setSavedNamingPatterns, setSavedProjects,
+    removeNamingPattern, removeProject, saveNamingPattern,
+    saveProject} = presetSlice.actions;
 
 export default presetSlice.reducer;

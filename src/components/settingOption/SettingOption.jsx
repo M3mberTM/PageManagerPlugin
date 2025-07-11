@@ -1,6 +1,6 @@
 import React from "react";
 
-import "../CommonStyles.css"
+import "../../CommonStyles.css"
 import {ActionButton} from "../actionButton/ActionButton";
 import {HighlightButton} from "../highlightButton/HighlightButton";
 

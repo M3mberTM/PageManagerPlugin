@@ -1,5 +1,5 @@
 import React, {useRef, useState} from "react";
-import "../../components/CommonStyles.css";
+import "../../CommonStyles.css";
 import {storage} from 'uxp';
 import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {app, core} from "photoshop";

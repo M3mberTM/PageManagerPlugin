@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {storage} from 'uxp';
 
-import "../../components/CommonStyles.css"
+import "../../CommonStyles.css"
 import {SettingOption} from "../../components/settingOption/SettingOption";
 import {logDecorator} from "../../utils/Logger";
 import {SETTING_IDS, SETTINGS_FOLDER, SETTINGS_FILE, PATH_DELIMITER} from "../../utils/constants";
