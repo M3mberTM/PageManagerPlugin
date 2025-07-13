@@ -16,18 +16,11 @@ const presetSlice = createSlice({
         saveNamingPattern: (state, action) => {
             state.savedNamingPatterns = state.savedNamingPatterns.concat(action.payload)
         },
-        removeNamingPattern: (state, action) => {
-            state.savedNamingPatterns = state.savedNamingPatterns.filter((np) => np !== action.payload)
-        },
-        removeProject: (state, action) => {
-            // implement removeProject method
-            state.savedProjects = action.payload
-        }
     },
 });
 
 export const {setSavedNamingPatterns, setSavedProjects,
-    removeNamingPattern, removeProject, saveNamingPattern,
+    saveNamingPattern,
     saveProject} = presetSlice.actions;
 
 export default presetSlice.reducer;

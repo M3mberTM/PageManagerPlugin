@@ -13,7 +13,7 @@ import {HighlightButton} from "../../components/highlightButton/HighlightButton"
 import {PRESET_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
 import {setNamingPattern} from "../../redux/namingSlice";
-import {saveNamingPattern} from "../../redux/presetSlice";
+import {saveNamingPattern, setSavedNamingPatterns} from "../../redux/presetSlice";
 
 const fs = storage.localFileSystem;
 export const Naming = () => {
@@ -69,44 +69,33 @@ export const Naming = () => {
         await spawnDialog(<GuideModal/>, 'Template Guide')
     })
 
-    // todo refactor all functionality underneath this
-
-
-    const loadPresets = logDecorator(async function loadPresets() {
-        const dataFolder = await fs.getDataFolder()
-        const dataFolderPath = dataFolder.nativePath
-        const presetContents = await readFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`)
-        return JSON.parse(presetContents).presets
-    })
-
-
-
     const deletePreset = logDecorator(async function deletePreset(template)  {
         if (!template) {
+            alert('No pattern was selected')
             return
         }
-        const filteredPresets = presets.filter((item) => {
+        const filteredPatterns = savedNamingPatterns.filter((item) => {
             return item !== template
         })
-        setPresets(filteredPresets)
-        const dataFolder = await fs.getDataFolder()
-        const dataFolderPath = dataFolder.nativePath
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify({presets: filteredPresets}))
+        const isPatternDeleted = await writeToPresetFile(filteredPatterns)
+        if (isPatternDeleted) {
+            console.log('Deleted pattern: ', template)
+            dispatch(setSavedNamingPatterns(filteredPatterns))
+        }
         // deselect all values as if there are only two values, it still keeps the deleted value as the selected visually despite it being not
         document.getElementById("saved-templates").selectedIndex = -1
-
     })
 
-    const applyPreset =  logDecorator(function applyPreset(template)  {
+    const selectPattern =  syncLogDecorator(function selectPattern(template)  {
         if (template === undefined || template == null) {
             return
         }
         if (template.length < 1) {
             return
         }
-        applyTemplate(template).then()
-
+        setTemplate(applyTemplate(template))
     })
+
     const shownName = namingPattern.length < 1 ? exampleFilename : applyTemplate(namingPattern)
     return <div id={"naming"}>
         <Section sectionName={"Naming"} isTransparent={true}>
@@ -130,10 +119,10 @@ export const Naming = () => {
                             })}
                         </sp-menu>
                     </sp-picker>
-                    <ActionButton classHandle={"width-50"} clickHandler={async () => await deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isFocused}>Delete
+                    <ActionButton classHandle={"width-50"} clickHandler={() => deletePreset(document.getElementById("saved-templates").value)} isDisabled={!isFocused}>Delete
                     </ActionButton>
                     <HighlightButton classHandle={"width-50 unimportant-button"} clickHandler={() => {
-                        applyPreset(document.getElementById("saved-templates").value).then()
+                        selectPattern(document.getElementById("saved-templates").value)
                     }} isDisabled={!isFocused}>Load
                     </HighlightButton>
                 </div>

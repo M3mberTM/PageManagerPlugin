@@ -35,7 +35,6 @@ export const GuideModal = ({dialog}) => {
                         them in the next section.
                     </sp-body>
                     <sp-heading size={'M'}>Documentation</sp-heading>
-                    <br/>
                     <Table>
                         <TableRow>
                             <TableHeading>Command</TableHeading>
@@ -47,28 +46,17 @@ export const GuideModal = ({dialog}) => {
                             <TableColumn>%og%</TableColumn>
                             <TableColumn>Original file name</TableColumn>
                         </TableRow>
+                        <TableRow>
+                            <TableColumn>num</TableColumn>
+                            <TableColumn>%num%</TableColumn>
+                            <TableColumn>Current page number</TableColumn>
+                        </TableRow>
+                        <TableRow>
+                            <TableColumn>an</TableColumn>
+                            <TableColumn>%a3%</TableColumn>
+                            <TableColumn>Current page number, prepended by zeros until the length of the number equals the number inputted</TableColumn>
+                        </TableRow>
                     </Table>
-                    <div class={"table-style"}>
-                        <div class={"row-header-style"}>
-                            <sp-heading size={"XS"} class={"col-style text-center col-right-border width-50"}>Command</sp-heading>
-                            <sp-heading size={"XS"} class={"col-style text-center width-50"}>Explanation</sp-heading>
-                        </div>
-                        <div class={"row-style"}>
-                            <sp-body class={"col-style col-right-border width-50"}>og</sp-body>
-                            <sp-body class={"col-style width-50 left-pad"}>Takes the original file name</sp-body>
-                        </div>
-                        <div class={"row-style"}>
-                            <sp-body class={"col-style col-right-border width-50"}>num</sp-body>
-                            <sp-body class={"col-style width-50 left-pad"}>Writes the page number (Page numbers start at 1 from the first file in the folder. You can
-                                adjust this in the movement tab though.</sp-body>
-                        </div>
-                        <div className={"row-style"}>
-                            <sp-body class={"col-style col-right-border width-50"}>an</sp-body>
-                            <sp-body class={"col-style width-50 left-pad"}>Writes the page number with leading zeros (replace the character n with the number of
-                                leading zeros you want in the page number. Example. a3 will give 001 for page number 1)
-                            </sp-body>
-                        </div>
-                    </div>
                 </div>
             </div>
             <br/>
