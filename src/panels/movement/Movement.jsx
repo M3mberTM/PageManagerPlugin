@@ -1,6 +1,5 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {Section} from "../../components/section/Section";
-import {useState} from "react";
 import "./Movement.css";
 import "../../CommonStyles.css";
 import {FileObject} from "../../components/fileObject/FileObject";
@@ -9,88 +8,74 @@ import {createRoot} from "react-dom";
 import {OverwriteModal} from "../../modals/overwrite/OverwriteModal";
 import {ProjectModal} from "../../modals/project/ProjectModal";
 import {useDispatch} from "react-redux";
-// import {setFiles} from "../../redux/fileSlice";
-import {logDecorator} from "../../utils/Logger";
+import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {core} from "photoshop";
 import {storage} from 'uxp';
 import {showAlert, entryExists, readFile, writeToFile} from "../../utils/helper";
 import {ActionButton} from "../../components/actionButton/ActionButton";
 import {HighlightButton} from "../../components/highlightButton/HighlightButton";
-import {PROJECT_FILE, STORAGE_FOLDER, PATH_DELIMITER} from "../../utils/constants";
+import {PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
+import Toggleable from "../../components/helpers/Toggleable";
 
 const fs = storage.localFileSystem;
 
 export const Movement = () => {
     useSetUp()
-    // states
-    const [projectFiles, setProjectFiles] = useState([])
-    const [directories, setDirectories] = useState({})
-    const [isPanelFocused, setIsPanelFocused] = useState(false)
-    const [currentPageIndex, setCurrentPageIndex] = useState(0)
-    const [completedNum, setCompletedNum] = useState(0)
-    const [pageNumber, setPageNumber] = useState(0)
-    const [isStart, setIsStart] = useState(true)
-    const [currentPageName, setCurrentPageName] = useState("")
-    const [projects, setProjects] = useState({})
-    // other variables
-    let overwriteAlert = null
-    let projectDialog = null
+    const DOUBLE_CLICK_DELAY = 1000
+    const completedFilesNum = useRef(0)
+    const currentPageIndex = useRef(0)
+    // helper refs
+    const isStart = useRef(true)
     const isLoadingFile = useRef(false)
-    const presetFile = `${STORAGE_FOLDER}${PATH_DELIMITER}${PROJECT_FILE}`
-    const dispatch = useDispatch()
     const scrollRef = useRef()
     const currentDoc = useRef(undefined)
     const previousDoc = useRef(undefined)
+    const doubleClickHandler = useRef(undefined)
     // selectors
-    const dirFiles = useSelector(state => state.fileSlice.value)
-    const namingTemplate = useSelector((state) => state.templateSlice.value)
-    const dirs = useSelector((state) => state.folderSlice.value)
-    const isFocus = useSelector(state => state.helperSlice.isFocused)
-    const savedProjects = useSelector(state => state.projectSlice.savedProjects)
-    const settings = useSelector(state => state.settingsSlice)
+    const dispatch = useDispatch()
+    const fsSlice = useSelector(state => state.fileSystem)
+    const utilSlice = useSelector(state => state.utils)
+    const presetSlice = useSelector(state => state.presets)
 
-    // disables buttons (is on when there is a file picker)
-    useEffect(() => {
-        setIsPanelFocused(isFocus)
-    }, [isFocus])
+    const isFocused = utilSlice.isFocused
+    const loadedFiles = fsSlice.files
+    const savedProjects = presetSlice.savedProjects
 
-    // loads the saved projects from files
-    useEffect(() => {
-        console.log("Saved projects: ", savedProjects)
-        setProjects(savedProjects)
-    }, [savedProjects])
-
-    // updates the files shown each time they are changed in the other panels
-    useEffect(() => {
-        const loadedFiles = [...dirFiles]
-        setProjectFiles(loadedFiles)
-        setCurrentPageIndex(0)
-        setPageNumber(0)
-        setIsStart(true)
-        setCompletedNum(0)
-    }, [dirFiles])
-
-    // Updates the page name each time it is changed in the Naming panel
-    useEffect(() => {
-        if (projectFiles.length > 0) {
-            getPageName(projectFiles[currentPageIndex]).then((pageName) => {
-                setCurrentPageName(pageName)
-            })
-        }
-    }, [namingTemplate])
-
-
-    //Updates the import and export directories
-    useEffect(() => {
-        setDirectories(dirs)
-        console.log("Import or Export updated. Reloaded import and export directories", dirs)
-    }, [dirs])
-
-    // automatically scrolls to the current file opened in the file list
-    const elementScrollToView = logDecorator(function elementScrollToView()  {
+    const elementScrollToView = syncLogDecorator(function elementScrollToView()  {
         scrollRef.current.scrollIntoView({behavior: 'smooth'})
     })
+
+    const fileDoubleClickHandler = syncLogDecorator(function fileDoubleClickHandler(fileIndex) {
+        // implement go to file functionality
+
+    })
+
+    const fileClickHandler = syncLogDecorator(function fileClickHandler(event, fileIndex) {
+        const isCtrlPressed = event.ctrlKey
+        if (isCtrlPressed) {
+            // implement remove file function here
+        }
+    })
+    // todo redo functionality underneath this
+
+    const goToFile = logDecorator(async function goToFile(pageIndex)  {
+        // if the person is stupid enough to double click the file he is on, this will prevent it
+        if (pageIndex === currentPageIndex) {
+            return
+        }
+        // goes to the specified file in list based on index of it
+        const newPageNum = projectFiles[pageIndex].pageNumber
+        const pageName = await getPageName(projectFiles[pageIndex])
+        // Changes state of the Photoshop application, executeAsModal has to be used
+        await core.executeAsModal(() => openFile(pageIndex))
+        await core.executeAsModal(() => closeFile(previousDoc.current))
+        if (isStart) {
+            setIsStart(false)
+        }
+
+    })
+    // automatically scrolls to the current file opened in the file list
 
     const openFile = logDecorator(async function openFile(pageIndex)  {
         const app = window.require("photoshop").app
@@ -120,25 +105,6 @@ export const Movement = () => {
 
     })
 
-    const goToFile = logDecorator(async function goToFile(pageIndex)  {
-        // if the person is stupid enough to double click the file he is on, this will prevent it
-        if (pageIndex === currentPageIndex) {
-           return
-        }
-        // goes to the specified file in list based on index of it
-        const newPageNum = projectFiles[pageIndex].pageNumber
-        const pageName = await getPageName(projectFiles[pageIndex])
-        // Changes state of the Photoshop application, executeAsModal has to be used
-        await core.executeAsModal(() => openFile(pageIndex))
-        await core.executeAsModal(() => closeFile(previousDoc.current))
-        setCurrentPageIndex(pageIndex)
-        setPageNumber(newPageNum)
-        setCurrentPageName(pageName)
-        if (isStart) {
-            setIsStart(false)
-        }
-
-    })
 
     const goToNextFile = logDecorator(async function goToNextFile(isForward)  {
         if (!isLoadingFile.current) {
@@ -435,45 +401,45 @@ export const Movement = () => {
         {/*File showcase*/}
         <Section sectionName={"Files"} isTransparent={true}>
             <div>
-                <sp-progressbar max={projectFiles.length} value={completedNum} style={{width: "100%"}}>
+                <sp-progressbar max={loadedFiles.length} value={completedFilesNum.current} style={{width: "100%"}}>
                     <sp-label slot={"label"} size={"small"}>Progress:</sp-label>
                 </sp-progressbar>
                 <div id={"files"}>
-                    {projectFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex ? scrollRef : undefined} name={file.name} status={file.isDone}
-                                                            active={index === currentPageIndex} key={index} pageNum={file.pageNumber} goToFunc={goToFile} pageIndex={index}
+                    {loadedFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex.current ? scrollRef : undefined} name={file.name} status={file.isDone}
+                                                            active={index === currentPageIndex.current} key={index} pageNum={file.pageNumber} clickHandler={fileClickHandler} pageIndex={index}
                     ></FileObject>)}
                 </div>
             </div>
             <div class={"fit-row-style"}>
-                {isStart &&
+                <Toggleable isToggled={isStart.current}>
                     <div>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{"<"}</ActionButton>
-                        <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isPanelFocused} clickHandler={() => {
+                        <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isFocused} clickHandler={() => {
                             openStartingFile().then()
                         }}>Start
                         </HighlightButton>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{">"}</ActionButton>
                     </div>
-                }
-                {!isStart &&
+                </Toggleable>
+                <Toggleable isToggled={!isStart.current}>
                     <div>
                         <ActionButton style={{width: "20%"}} clickHandler={() => {
                             goToNextFile(false).then()
-                        }} isDisabled={isStart || !isPanelFocused}>{"<"}</ActionButton>
+                        }} isDisabled={isStart || !isFocused}>{"<"}</ActionButton>
                         <ActionButton style={{width: "60%"}} clickHandler={() => {
                             changeFileStatus(currentPageIndex).then()
-                        }} isDisabled={isStart || !isPanelFocused}>Complete
+                        }} isDisabled={isStart || !isFocused}>Complete
                         </ActionButton>
                         <ActionButton style={{width: "20%"}} clickHandler={() => {
                             goToNextFile(true).then()
-                        }} isDisabled={isStart || !isPanelFocused}>{">"}</ActionButton>
+                        }} isDisabled={isStart || !isFocused}>{">"}</ActionButton>
                     </div>
-                }
+                </Toggleable>
             </div>
                 <div class={"fit-row-style"}>
                     <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
                         overwriteCheck(currentPageName).then()
-                    }} isDisabled={isStart || !isPanelFocused}>Save
+                    }} isDisabled={isStart || !isFocused}>Save
                     </HighlightButton>
                 </div>
         </Section>
@@ -484,15 +450,15 @@ export const Movement = () => {
             </sp-textfield>
                 <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
                     setNewPageNum(document.getElementById("page-number-input").value).then()
-                }} isDisabled={isStart || !isPanelFocused}>Set</HighlightButton>
+                }} isDisabled={isStart || !isFocused}>Set</HighlightButton>
             <sp-heading size={"XS"}>Current file name</sp-heading>
-            <sp-heading size={"XXS"}>{currentPageName}</sp-heading>
+            <sp-heading size={"XXS"}>Placeholder. Replace me!</sp-heading>
         </Section>
 
         <Section isTransparent={true} sectionName={"project"}>
             <sp-picker class={"button-100"} placeholder={"Choose a selection..."}>
                 <sp-menu slot={"options"} id={"saved-projects"}>
-                    {Object.keys(projects).map((item, index) => {
+                    {Object.keys(savedProjects).map((item, index) => {
                         return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
                     })}
                 </sp-menu>
@@ -500,13 +466,13 @@ export const Movement = () => {
             <div class={"fit-row-style"}>
                 <ActionButton style={{width: "50%"}} clickHandler={() => {
                     removeProject(document.getElementById("saved-projects").value).then()
-                }} isDisabled={!isPanelFocused}>Remove
+                }} isDisabled={!isFocused}>Remove
                 </ActionButton>
-                <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isPanelFocused}>Load</ActionButton>
+                <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isFocused}>Load</ActionButton>
             </div>
             <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
                 openProjectDialog().then()
-            }} isDisabled={!isPanelFocused}>Save
+            }} isDisabled={!isFocused}>Save
             </HighlightButton>
         </Section>
 

@@ -2,7 +2,7 @@ import {createSlice} from '@reduxjs/toolkit';
 
 const presetSlice = createSlice({
     name: 'presetSlicer',
-    initialState: {savedProjects: [], savedNamingPatterns: []},
+    initialState: {savedProjects: {}, savedNamingPatterns: []},
     reducers: {
         setSavedProjects: (state, action) => {
             state.savedProjects = action.payload;
