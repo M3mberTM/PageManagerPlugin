@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {Section} from "../../components/section/Section";
 import "./Movement.css";
 import "../../CommonStyles.css";
@@ -17,96 +17,164 @@ import {HighlightButton} from "../../components/highlightButton/HighlightButton"
 import {PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
 import Toggleable from "../../components/helpers/Toggleable";
+import {setIsStart} from "../../redux/utilsSlice";
 
 const fs = storage.localFileSystem;
 
 export const Movement = () => {
     useSetUp()
-    const DOUBLE_CLICK_DELAY = 1000
     const completedFilesNum = useRef(0)
-    const currentPageIndex = useRef(0)
+    const currentPageIndex = useRef(-1)
     // helper refs
-    const isStart = useRef(true)
     const isLoadingFile = useRef(false)
     const scrollRef = useRef()
     const currentDoc = useRef(undefined)
     const previousDoc = useRef(undefined)
-    const doubleClickHandler = useRef(undefined)
+    const isDoubleClickDisabled = useRef(false)
     // selectors
     const dispatch = useDispatch()
     const fsSlice = useSelector(state => state.fileSystem)
     const utilSlice = useSelector(state => state.utils)
     const presetSlice = useSelector(state => state.presets)
+    const namingSlice = useSelector(state => state.naming)
 
     const isFocused = utilSlice.isFocused
+    const isStart = utilSlice.isStart
     const loadedFiles = fsSlice.files
     const savedProjects = presetSlice.savedProjects
+    const namingPattern = namingSlice.namingPattern
 
-    const elementScrollToView = syncLogDecorator(function elementScrollToView()  {
+    // Rerender variable
+    const [rerender, setRerender] = useState(false)
+
+    const elementScrollToView = syncLogDecorator(function elementScrollToView() {
         scrollRef.current.scrollIntoView({behavior: 'smooth'})
     })
 
-    const fileDoubleClickHandler = syncLogDecorator(function fileDoubleClickHandler(fileIndex) {
-        // implement go to file functionality
+    const rerenderPanel = syncLogDecorator(function rerenderPanel() {
+        setRerender(!rerender)
+    })
 
+    const fileDoubleClickHandler = logDecorator(async function fileDoubleClickHandler(fileIndex) {
+        // if the click functionality is done, ignore so that two functions aren't done at the same time
+        if (!isDoubleClickDisabled.current) {
+            await goToFile(fileIndex)
+        }
     })
 
     const fileClickHandler = syncLogDecorator(function fileClickHandler(event, fileIndex) {
-        const isCtrlPressed = event.ctrlKey
+        const isCtrlPressed = event.metaKey || event.ctrlKey
         if (isCtrlPressed) {
-            // implement remove file function here
+            // This is the worst solution I ever made but it works
+            isDoubleClickDisabled.current = true
+            // todo replace this with remove functionality
+            console.log('single click only!');
+            setTimeout(() => isDoubleClickDisabled.current = false, 100)
+
         }
+    })
+
+    const goToFile = logDecorator(async function goToFile(pageIndex) {
+        // if the person is stupid enough to double click the file he is on, this will prevent it
+        if (pageIndex === currentPageIndex.current) {
+            return
+        }
+        // Changes state of the Photoshop application, executeAsModal has to be used
+        await openFile(pageIndex)
+        await closeFile(previousDoc.current)
+
+        currentPageIndex.current = pageIndex
+        if (isStart) {
+            dispatch(setIsStart(false))
+        }
+        rerenderPanel()
+        console.log('Rerendered!')
+    })
+
+    const openFile = logDecorator(async function openFile(pageIndex) {
+        if (!isLoadingFile.current) {
+            let fileEntry
+            console.log('opening entry: ', loadedFiles[pageIndex])
+            if (loadedFiles[pageIndex].exportPath.length > 1) {
+                fileEntry = await fs.getEntryWithUrl(loadedFiles[pageIndex].exportPath)
+            } else {
+                fileEntry = await fs.getEntryWithUrl(loadedFiles[pageIndex].filePath)
+            }
+            previousDoc.current = currentDoc.current
+            currentDoc.current = await openDocument(fileEntry)
+
+            currentPageIndex.current = pageIndex
+            console.log("Opened document: ", currentDoc.current)
+        }
+    })
+
+    const openDocument = logDecorator(async function openDocument(entry) {
+        const app = window.require("photoshop").app
+        let document
+        isLoadingFile.current = true
+        await core.executeAsModal(async () => document = await app.open(entry))
+        isLoadingFile.current = false
+        return document
+    })
+
+    const closeDocument = logDecorator(async function closeDocument(document){
+        await core.executeAsModal(async () => await document.close())
+    })
+
+    const closeFile = logDecorator(async function closeFile(document) {
+        if (!isLoadingFile.current) {
+            if (!document) {
+                console.log('No previous document to close!')
+                return
+            }
+            await closeDocument(document)
+            console.log("Closed document ", document)
+        }
+    })
+
+    const getPageName = syncLogDecorator(function getPageName(currentPage) {
+        if (!currentPage) {
+            return 'Page name'
+        }
+        // if there is no template, just use the normal page name
+        if (namingPattern.length < 1) {
+            return currentPage.name.replace(/\.[\w\d]+$/, "")
+        }
+        // if there is template, replace each specific pattern for it's part
+        const originalNameAppend = namingPattern.replaceAll("%og%", currentPage.name)
+        const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
+        const leadingZerosPattern = /%a\d+%/
+        let leadingZerosAppend = fileNumberAppend
+        while (leadingZerosPattern.test(leadingZerosAppend)) {
+            const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
+            const padLength = parseInt(match.substring(2, match.length - 1))
+            const paddedNum = addLeadingZeros(currentPage.pageNumber, padLength)
+            leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
+        }
+        return leadingZerosAppend.replace(/\.[\w\d]+$/, "")
+
+    })
+
+    const openStartingFile = logDecorator(async function openStartingFile() {
+        if (loadedFiles.length > 0) {
+            await openFile(0)
+            dispatch(setIsStart(false))
+            rerenderPanel()
+        } else {
+            alert("No files were loaded")
+        }
+
     })
     // todo redo functionality underneath this
 
-    const goToFile = logDecorator(async function goToFile(pageIndex)  {
-        // if the person is stupid enough to double click the file he is on, this will prevent it
-        if (pageIndex === currentPageIndex) {
-            return
-        }
-        // goes to the specified file in list based on index of it
-        const newPageNum = projectFiles[pageIndex].pageNumber
-        const pageName = await getPageName(projectFiles[pageIndex])
-        // Changes state of the Photoshop application, executeAsModal has to be used
-        await core.executeAsModal(() => openFile(pageIndex))
-        await core.executeAsModal(() => closeFile(previousDoc.current))
-        if (isStart) {
-            setIsStart(false)
-        }
-
-    })
-    // automatically scrolls to the current file opened in the file list
-
-    const openFile = logDecorator(async function openFile(pageIndex)  {
-        const app = window.require("photoshop").app
-        let fileEntry = null
-        if (projectFiles[pageIndex].exportPath.length > 1) {
-            fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].exportPath)
-        } else {
-            fileEntry = await fs.getEntryWithUrl(projectFiles[pageIndex].filename)
-        }
-        previousDoc.current = currentDoc.current
-        currentDoc.current = await app.open(fileEntry)
-        if (!previousDoc.current) {
-            previousDoc.current = currentDoc.current
-        }
-        console.log("Opened document: ", currentDoc.current)
-        if (settings.docSaveOnOpen) {
-            const pageName = await getPageName(projectFiles[pageIndex])
-            if (projectFiles[pageIndex].exportPath.length < 1) {
-                await overwriteCheck(pageName)
-            }
-        }
-    })
-
-    const openNextFile = logDecorator(async function openNextFile(pageNum)  {
+    const openNextFile = logDecorator(async function openNextFile(pageNum) {
         // current function changes the state in photoshop, therefore it is called using executeAsModal
         await core.executeAsModal(() => openFile(pageNum))
 
     })
 
 
-    const goToNextFile = logDecorator(async function goToNextFile(isForward)  {
+    const goToNextFile = logDecorator(async function goToNextFile(isForward) {
         if (!isLoadingFile.current) {
             isLoadingFile.current = true
 
@@ -145,13 +213,9 @@ export const Movement = () => {
         }
     })
 
-    const closeFile = logDecorator(async function closeFile(document)  {
-        await document.close()
-        console.log("Closed document ", document)
-    })
 
     // Changes the file status to complete if not completed and vice versa
-    const changeFileStatus = logDecorator(function changeFileStatus(index)  {
+    const changeFileStatus = syncLogDecorator(function changeFileStatus(index) {
 
         const file = projectFiles[index]
         const newFile = {...file, isDone: !file.isDone}
@@ -172,44 +236,13 @@ export const Movement = () => {
 
     })
 
-    const openStartingFile = logDecorator(async function openStartingFile()  {
-        if (projectFiles.length > 0) {
-            await openNextFile(0)
-            setIsStart(false)
-            const pageName = await getPageName(projectFiles[0])
-            setCurrentPageName(pageName)
-        } else {
-            alert("No files were loaded")
-        }
 
-    })
-
-    const addLeadingZeros = logDecorator(function addLeadingZeros(num, size)  {
+    const addLeadingZeros = syncLogDecorator(function addLeadingZeros(num, size) {
         return String(num).padStart(size, '0')
     })
 
-    // gets the page name according to the template given in Naming panel
-    const getPageName = logDecorator(async function getPageName(currentPage)  {
-        // if there is no template, just use the normal page name
-        if (namingTemplate.length < 1) {
-            return currentPage.name.replace(/\.[\w\d]+$/, "")
-        }
-        // if there is template, replace each specific pattern for it's part
-        const originalNameAppend = namingTemplate.replaceAll("%og%", currentPage.name)
-        const fileNumberAppend = originalNameAppend.replaceAll("%num%", String(currentPage.pageNumber))
-        const leadingZerosPattern = /%a\d+%/
-        let leadingZerosAppend = fileNumberAppend
-        while (leadingZerosPattern.test(leadingZerosAppend)) {
-            const match = leadingZerosPattern.exec(leadingZerosAppend)['0']
-            const padLength = parseInt(match.substring(2, match.length - 1))
-            const paddedNum = await addLeadingZeros(currentPage.pageNumber, padLength)
-            leadingZerosAppend = leadingZerosAppend.replaceAll(match, paddedNum)
-        }
-        return leadingZerosAppend.replace(/\.[\w\d]+$/, "")
 
-    })
-
-    const saveFile = logDecorator(async function saveFile(pageName)  {
+    const saveFile = logDecorator(async function saveFile(pageName) {
         const exportFolder = await fs.getEntryWithUrl(directories.exportDir)
         const saveName = `${pageName}.psd`
         const entry = await exportFolder.createFile(saveName, {overwrite: true})
@@ -237,7 +270,7 @@ export const Movement = () => {
 
     })
 
-    const setNewPageNum = logDecorator(async function setNewPageNum(newPageNum)  {
+    const setNewPageNum = logDecorator(async function setNewPageNum(newPageNum) {
         // get page number selected.
         // get difference of new number to the original. Update all other pages by this amount as well to keep consistency
 
@@ -265,7 +298,7 @@ export const Movement = () => {
 
     })
 
-    const overwriteCheck = logDecorator(async function overwriteCheck(pageName)  {
+    const overwriteCheck = logDecorator(async function overwriteCheck(pageName) {
         if (directories.exportDir.length < 1) {
             alert("No export directory is chosen")
             return
@@ -284,14 +317,14 @@ export const Movement = () => {
         }
 
     })
-    const overwriteFile = logDecorator(async function overwriteFile(pageName)  {
+    const overwriteFile = logDecorator(async function overwriteFile(pageName) {
         overwriteAlert.close()
         await saveFile(pageName)
 
     })
 
     // if file is about to be overwritten, show overwrite dialog because uxp doesn't support overwrite dialog by default
-    const openOverwriteDialog = logDecorator(async function openOverwriteDialog(pageName)  {
+    const openOverwriteDialog = logDecorator(async function openOverwriteDialog(pageName) {
         if (!overwriteAlert) {
             overwriteAlert = document.createElement("dialog")
             overwriteAlert.style.padding = "1rem"
@@ -314,7 +347,7 @@ export const Movement = () => {
     })
 
 
-    const openProjectDialog = logDecorator(async function openProjectDialog()  {
+    const openProjectDialog = logDecorator(async function openProjectDialog() {
         if (projectFiles.length < 1) {
             alert("No files are loaded!")
             return
@@ -341,7 +374,7 @@ export const Movement = () => {
 
     })
 
-    const savePSD = logDecorator(async function savePSD(entry)  {
+    const savePSD = logDecorator(async function savePSD(entry) {
         try {
             currentDoc.current.saveAs.psd(entry)
             return true
@@ -352,7 +385,7 @@ export const Movement = () => {
         }
     })
 
-    const removeProject = logDecorator(async function removeProject(inputVal)  {
+    const removeProject = logDecorator(async function removeProject(inputVal) {
         if (!inputVal) {
             return
         }
@@ -366,14 +399,14 @@ export const Movement = () => {
         setProjects(newProjects)
         const dataFolder = await fs.getDataFolder()
         const dataFolderPath = dataFolder.nativePath
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newProjects))
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`, JSON.stringify(newProjects))
         console.log("Removed project. Current projects: ", newProjects)
         // do this to unselect anything in the dropdown menu
         document.getElementById("saved-projects").selectedIndex = -1
 
     })
 
-    const saveProject = logDecorator(async function saveProject(inputVal)  {
+    const saveProject = logDecorator(async function saveProject(inputVal) {
         projectDialog.close()
         const dataFolder = await fs.getDataFolder()
         const dataFolderPath = dataFolder.nativePath
@@ -382,12 +415,12 @@ export const Movement = () => {
         const newProjects = {...projects, ...newProject}
 
         setProjects(newProjects)
-        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`,JSON.stringify(newProjects))
+        await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${presetFile}`, JSON.stringify(newProjects))
         console.log("New project saved", newProject)
 
     })
 
-    const loadProject = logDecorator(async function loadProject(projectName)  {
+    const loadProject = logDecorator(async function loadProject(projectName) {
         if (!projectName) {
             return
         }
@@ -397,6 +430,8 @@ export const Movement = () => {
 
     })
 
+    const pageName = getPageName(loadedFiles[currentPageIndex.current])
+
     return <div id={"export"}>
         {/*File showcase*/}
         <Section sectionName={"Files"} isTransparent={true}>
@@ -405,13 +440,16 @@ export const Movement = () => {
                     <sp-label slot={"label"} size={"small"}>Progress:</sp-label>
                 </sp-progressbar>
                 <div id={"files"}>
-                    {loadedFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex.current ? scrollRef : undefined} name={file.name} status={file.isDone}
-                                                            active={index === currentPageIndex.current} key={index} pageNum={file.pageNumber} clickHandler={fileClickHandler} pageIndex={index}
+                    {loadedFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex.current ? scrollRef : undefined} name={file.name}
+                                                                  status={file.isDone}
+                                                                  doubleClickHandler={fileDoubleClickHandler}
+                                                                  active={index === currentPageIndex.current} key={index} pageNum={file.pageNumber}
+                                                                  clickHandler={fileClickHandler} pageIndex={index}
                     ></FileObject>)}
                 </div>
             </div>
             <div class={"fit-row-style"}>
-                <Toggleable isToggled={isStart.current}>
+                <Toggleable isToggled={isStart}>
                     <div>
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{"<"}</ActionButton>
                         <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isFocused} clickHandler={() => {
@@ -421,7 +459,7 @@ export const Movement = () => {
                         <ActionButton style={{width: "20%"}} isDisabled={isStart}>{">"}</ActionButton>
                     </div>
                 </Toggleable>
-                <Toggleable isToggled={!isStart.current}>
+                <Toggleable isToggled={!isStart}>
                     <div>
                         <ActionButton style={{width: "20%"}} clickHandler={() => {
                             goToNextFile(false).then()
@@ -436,23 +474,23 @@ export const Movement = () => {
                     </div>
                 </Toggleable>
             </div>
-                <div class={"fit-row-style"}>
-                    <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
-                        overwriteCheck(currentPageName).then()
-                    }} isDisabled={isStart || !isFocused}>Save
-                    </HighlightButton>
-                </div>
+            <div class={"fit-row-style"}>
+                <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
+                    overwriteCheck(currentPageName).then()
+                }} isDisabled={isStart || !isFocused}>Save
+                </HighlightButton>
+            </div>
         </Section>
 
         <Section isTransparent={true} sectionName={"Additional information"}>
             <sp-textfield class={"button-100"} id={"page-number-input"}>
                 <sp-label slot={"label"} isrequired={"true"}>Manual page number</sp-label>
             </sp-textfield>
-                <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
-                    setNewPageNum(document.getElementById("page-number-input").value).then()
-                }} isDisabled={isStart || !isFocused}>Set</HighlightButton>
+            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
+                setNewPageNum(document.getElementById("page-number-input").value).then()
+            }} isDisabled={isStart || !isFocused}>Set</HighlightButton>
             <sp-heading size={"XS"}>Current file name</sp-heading>
-            <sp-heading size={"XXS"}>Placeholder. Replace me!</sp-heading>
+            <sp-heading size={"XXS"}>{pageName}</sp-heading>
         </Section>
 
         <Section isTransparent={true} sectionName={"project"}>
@@ -468,7 +506,8 @@ export const Movement = () => {
                     removeProject(document.getElementById("saved-projects").value).then()
                 }} isDisabled={!isFocused}>Remove
                 </ActionButton>
-                <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)} isDisabled={!isFocused}>Load</ActionButton>
+                <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)}
+                              isDisabled={!isFocused}>Load</ActionButton>
             </div>
             <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
                 openProjectDialog().then()

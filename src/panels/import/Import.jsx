@@ -3,7 +3,7 @@ import {Section} from "../../components/section/Section";
 import "../../CommonStyles.css";
 import {useDispatch, useSelector} from "react-redux";
 import {setImportDir, setExportDir, setShouldExport, setFiles} from "../../redux/fileSystemSlice";
-import {setIsFocused} from "../../redux/utilsSlice";
+import {setIsFocused, setIsStart} from "../../redux/utilsSlice";
 import {ConvertModal} from "../../modals/convert/ConvertModal";
 import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {storage} from 'uxp';
@@ -46,6 +46,7 @@ export const Import = () => {
             return {filePath: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
         })
         dispatch(setFiles(fileObjects))
+        dispatch(setIsStart(true))
         // also setting import folder here
         const filePath = files[0].nativePath
         const folder= filePath.substring(0,filePath.lastIndexOf(PATH_DELIMITER))
