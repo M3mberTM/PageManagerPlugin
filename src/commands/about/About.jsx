@@ -2,7 +2,7 @@ import React from "react";
 import {storage, versions, shell} from "uxp";
 import os from "os";
 import "./About.css"
-import {ActionButton} from "../../components/actionButton/ActionButton";
+import {ActionButton} from "../../components/typography/ActionButton";
 
 const fs = storage.localFileSystem;
 

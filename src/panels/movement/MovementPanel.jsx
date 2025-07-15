@@ -1,8 +1,6 @@
 import React, {useRef, useState} from 'react';
-import {Section} from "../../components/section/Section";
 import "./Movement.css";
 import "../../CommonStyles.css";
-import {FileObject} from "../../components/fileObject/FileObject";
 import {useSelector} from "react-redux";
 import {createRoot} from "react-dom";
 import {OverwriteModal} from "../../modals/overwrite/OverwriteModal";
@@ -11,17 +9,17 @@ import {useDispatch} from "react-redux";
 import {logDecorator, syncLogDecorator} from "../../utils/Logger";
 import {core} from "photoshop";
 import {storage} from 'uxp';
-import {showAlert, entryExists, readFile, writeToFile} from "../../utils/helper";
-import {ActionButton} from "../../components/actionButton/ActionButton";
-import {HighlightButton} from "../../components/highlightButton/HighlightButton";
+import {showAlert, entryExists, writeToFile} from "../../utils/helper";
 import {PATH_DELIMITER} from "../../utils/constants";
 import {useSetUp} from "../../utils/presetManager";
-import Toggleable from "../../components/helpers/Toggleable";
 import {setIsStart} from "../../redux/utilsSlice";
+import {FileSection} from "./sections/FileSection";
+import {SavedProjectsSection} from "./sections/SavedProjectsSection";
+import {InformationSection} from "./sections/InformationSection";
 
 const fs = storage.localFileSystem;
 
-export const Movement = () => {
+export const MovementPanel = () => {
     useSetUp()
     const completedFilesNum = useRef(0)
     const currentPageIndex = useRef(-1)
@@ -430,90 +428,10 @@ export const Movement = () => {
 
     })
 
-    const pageName = getPageName(loadedFiles[currentPageIndex.current])
 
     return <div id={"export"}>
-        {/*File showcase*/}
-        <Section sectionName={"Files"} isTransparent={true}>
-            <div>
-                <sp-progressbar max={loadedFiles.length} value={completedFilesNum.current} style={{width: "100%"}}>
-                    <sp-label slot={"label"} size={"small"}>Progress:</sp-label>
-                </sp-progressbar>
-                <div id={"files"}>
-                    {loadedFiles.map((file, index) => <FileObject scrollRef={index === currentPageIndex.current ? scrollRef : undefined} name={file.name}
-                                                                  status={file.isDone}
-                                                                  doubleClickHandler={fileDoubleClickHandler}
-                                                                  active={index === currentPageIndex.current} key={index} pageNum={file.pageNumber}
-                                                                  clickHandler={fileClickHandler} pageIndex={index}
-                    ></FileObject>)}
-                </div>
-            </div>
-            <div class={"fit-row-style"}>
-                <Toggleable isToggled={isStart}>
-                    <div>
-                        <ActionButton style={{width: "20%"}} isDisabled={isStart}>{"<"}</ActionButton>
-                        <HighlightButton classHandle={"unimportant-button"} style={{width: "60%"}} isDisabled={!isFocused} clickHandler={() => {
-                            openStartingFile().then()
-                        }}>Start
-                        </HighlightButton>
-                        <ActionButton style={{width: "20%"}} isDisabled={isStart}>{">"}</ActionButton>
-                    </div>
-                </Toggleable>
-                <Toggleable isToggled={!isStart}>
-                    <div>
-                        <ActionButton style={{width: "20%"}} clickHandler={() => {
-                            goToNextFile(false).then()
-                        }} isDisabled={isStart || !isFocused}>{"<"}</ActionButton>
-                        <ActionButton style={{width: "60%"}} clickHandler={() => {
-                            changeFileStatus(currentPageIndex).then()
-                        }} isDisabled={isStart || !isFocused}>Complete
-                        </ActionButton>
-                        <ActionButton style={{width: "20%"}} clickHandler={() => {
-                            goToNextFile(true).then()
-                        }} isDisabled={isStart || !isFocused}>{">"}</ActionButton>
-                    </div>
-                </Toggleable>
-            </div>
-            <div class={"fit-row-style"}>
-                <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
-                    overwriteCheck(currentPageName).then()
-                }} isDisabled={isStart || !isFocused}>Save
-                </HighlightButton>
-            </div>
-        </Section>
-
-        <Section isTransparent={true} sectionName={"Additional information"}>
-            <sp-textfield class={"button-100"} id={"page-number-input"}>
-                <sp-label slot={"label"} isrequired={"true"}>Manual page number</sp-label>
-            </sp-textfield>
-            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
-                setNewPageNum(document.getElementById("page-number-input").value).then()
-            }} isDisabled={isStart || !isFocused}>Set</HighlightButton>
-            <sp-heading size={"XS"}>Current file name</sp-heading>
-            <sp-heading size={"XXS"}>{pageName}</sp-heading>
-        </Section>
-
-        <Section isTransparent={true} sectionName={"project"}>
-            <sp-picker class={"button-100"} placeholder={"Choose a selection..."}>
-                <sp-menu slot={"options"} id={"saved-projects"}>
-                    {Object.keys(savedProjects).map((item, index) => {
-                        return <sp-menu-item key={index} value={item}>{item}</sp-menu-item>
-                    })}
-                </sp-menu>
-            </sp-picker>
-            <div class={"fit-row-style"}>
-                <ActionButton style={{width: "50%"}} clickHandler={() => {
-                    removeProject(document.getElementById("saved-projects").value).then()
-                }} isDisabled={!isFocused}>Remove
-                </ActionButton>
-                <ActionButton style={{width: "50%"}} clickHandler={() => loadProject(document.getElementById("saved-projects").value)}
-                              isDisabled={!isFocused}>Load</ActionButton>
-            </div>
-            <HighlightButton classHandle={"button-100 unimportant-button"} clickHandler={() => {
-                openProjectDialog().then()
-            }} isDisabled={!isFocused}>Save
-            </HighlightButton>
-        </Section>
-
+        <FileSection/>
+        <InformationSection getPageName={getPageName} currentPageIndex={currentPageIndex}/>
+        <SavedProjectsSection/>
     </div>
 }

@@ -2,6 +2,7 @@ import React from "react";
 
 export const ActionButton = ({style, clickHandler, children, classHandle, isDisabled}) => {
     if (isDisabled) {
+        // noinspection HtmlUnknownBooleanAttribute
         return <sp-action-button style={style} class={classHandle} disabled>{children}</sp-action-button>
     }
     return (

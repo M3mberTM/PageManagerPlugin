@@ -1,8 +1,8 @@
 import React from "react";
 
 import "../../CommonStyles.css"
-import {ActionButton} from "../actionButton/ActionButton";
-import {HighlightButton} from "../highlightButton/HighlightButton";
+import {ActionButton} from "./ActionButton";
+import {HighlightButton} from "./HighlightButton";
 
 export const SettingOption = ({children, isEnabled, setter, description, settingId}) => {
     if (isEnabled) {

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {storage} from 'uxp';
 
 import "../../CommonStyles.css"
-import {SettingOption} from "../../components/settingOption/SettingOption";
+import {SettingOption} from "../../components/typography/SettingOption";
 import {logDecorator} from "../../utils/Logger";
 import {SETTING_IDS, SETTINGS_FOLDER, SETTINGS_FILE, PATH_DELIMITER} from "../../utils/constants";
 import {setDocSaveOnOpen, setZeroNumbering, setSaveBetweenClose, setAllStates} from "../../redux/settingsSlice";

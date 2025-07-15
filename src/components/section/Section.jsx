@@ -1,5 +1,4 @@
 import React from 'react';
-import "../../CommonStyles.css";
 export const Section = ({children, isTransparent, bgColor, headingColor, sectionName}) => {
     const borderRadius = "3px";
 
@@ -32,7 +31,7 @@ export const Section = ({children, isTransparent, bgColor, headingColor, section
         paddingTop: "0px",
     }
 
-    return (<div class={"section"} style={sectionStyle}>
+    return (<div style={sectionStyle}>
         <div style={sectionHeading}>
             {sectionName}
         </div>
