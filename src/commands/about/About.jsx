@@ -3,6 +3,7 @@ import {storage, versions, shell} from "uxp";
 import os from "os";
 import "./About.css"
 import {ActionButton} from "../../components/typography/ActionButton";
+import {action} from 'photoshop';
 
 const fs = storage.localFileSystem;
 
@@ -11,6 +12,17 @@ export const About = ({dialog}) => {
     Information panel describing basic use of the plugin as well as who made it and some links to stuff
      */
 
+    // todo redo and move this functionality into setup to use it throughout the plugin
+    const testFunction = async () => {
+        await action.addNotificationListener(['play'], (event, descriptor) => {
+            if (!descriptor._isCommand && descriptor._target[0]._name === 'PlayAction') {
+                alert('Fucking works. I am so happy.')
+            }
+            else {
+                console.log('Event: ', event, '\nDescriptor: ', descriptor)
+            }
+        })
+    }
     const openDataFolder = async () => {
         try {
             const dataFolder = await fs.getDataFolder()
@@ -60,6 +72,7 @@ export const About = ({dialog}) => {
                 </div>
             </div>
 
+            <ActionButton classHandle={"button-100"} style={{marginTop: "5px"}} clickHandler={testFunction} isDisabled={false}>Test</ActionButton>
             <ActionButton classHandle={"button-100"} style={{marginTop: "5px"}} clickHandler={openDataFolder} isDisabled={false}>Open Data Folder</ActionButton>
             <sp-button-group style={{marginTop: "10px"}}>
                 <sp-button tabindex={0} style={{marginLeft: "auto"}} autofocus="autofocus" variant="primary" onClick={() => dialog.close()}>Close</sp-button>

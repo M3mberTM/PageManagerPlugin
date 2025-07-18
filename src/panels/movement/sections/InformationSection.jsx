@@ -3,7 +3,7 @@ import {Section} from "../../../components/section/Section";
 import {HighlightButton} from "../../../components/typography/HighlightButton";
 import {useSelector} from "react-redux";
 
-export const InformationSection = ({getPageName, currentPageIndex}) => {
+export const InformationSection = ({}) => {
 
     const fsSlice = useSelector(state => state.fileSystem)
     const utilSlice = useSelector(state => state.utils)
@@ -12,7 +12,7 @@ export const InformationSection = ({getPageName, currentPageIndex}) => {
     const isStart = utilSlice.isStart
     const loadedFiles = fsSlice.files
 
-    const pageName = getPageName(loadedFiles[currentPageIndex.current])
+    const pageName = 'pageName'
     return (
         <Section isTransparent={true} sectionName={"Additional information"}>
             <sp-textfield class={"button-100"} id={"page-number-input"}>

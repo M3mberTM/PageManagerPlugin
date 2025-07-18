@@ -28,7 +28,6 @@ export const MovementPanel = () => {
     const scrollRef = useRef()
     const currentDoc = useRef(undefined)
     const previousDoc = useRef(undefined)
-    const isDoubleClickDisabled = useRef(false)
     // selectors
     const dispatch = useDispatch()
     const fsSlice = useSelector(state => state.fileSystem)
@@ -53,24 +52,6 @@ export const MovementPanel = () => {
         setRerender(!rerender)
     })
 
-    const fileDoubleClickHandler = logDecorator(async function fileDoubleClickHandler(fileIndex) {
-        // if the click functionality is done, ignore so that two functions aren't done at the same time
-        if (!isDoubleClickDisabled.current) {
-            await goToFile(fileIndex)
-        }
-    })
-
-    const fileClickHandler = syncLogDecorator(function fileClickHandler(event, fileIndex) {
-        const isCtrlPressed = event.metaKey || event.ctrlKey
-        if (isCtrlPressed) {
-            // This is the worst solution I ever made but it works
-            isDoubleClickDisabled.current = true
-            // todo replace this with remove functionality
-            console.log('single click only!');
-            setTimeout(() => isDoubleClickDisabled.current = false, 100)
-
-        }
-    })
 
     const goToFile = logDecorator(async function goToFile(pageIndex) {
         // if the person is stupid enough to double click the file he is on, this will prevent it
@@ -430,8 +411,8 @@ export const MovementPanel = () => {
 
 
     return <div id={"export"}>
-        <FileSection/>
-        <InformationSection getPageName={getPageName} currentPageIndex={currentPageIndex}/>
+        <FileSection getPageName={getPageName}/>
+        <InformationSection getPageName={getPageName}/>
         <SavedProjectsSection/>
     </div>
 }

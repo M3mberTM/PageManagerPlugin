@@ -8,6 +8,7 @@ import {setFiles, setImportDir} from "../../../redux/fileSystemSlice";
 import {setIsFocused, setIsStart} from "../../../redux/utilsSlice";
 import {PATH_DELIMITER} from "../../../utils/constants";
 import {storage} from 'uxp';
+import {setCurrentIndex} from "../../../redux/pageSlice";
 
 const fs = storage.localFileSystem;
 
@@ -37,6 +38,7 @@ export const ImportSection = ({dirPlaceholder}) => {
         })
         dispatch(setFiles(fileObjects))
         dispatch(setIsStart(true))
+        dispatch(setCurrentIndex(-1))
         // also setting import folder here
         const filePath = files[0].nativePath
         const folder= filePath.substring(0,filePath.lastIndexOf(PATH_DELIMITER))
