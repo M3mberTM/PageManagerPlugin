@@ -5,6 +5,7 @@ import fileSystemSlice from "./fileSystemSlice";
 import namingSlice from './namingSlice'
 import presetSlice from './presetSlice'
 import pageSlice from "./pageSlice";
+import actionSlice from "./actionSlice";
 
 const store = configureStore({
     reducer: {
@@ -13,7 +14,8 @@ const store = configureStore({
         settings: settingSlice,
         naming: namingSlice,
         presets: presetSlice,
-        pages: pageSlice
+        pages: pageSlice,
+        actions: actionSlice
     },
 });
 

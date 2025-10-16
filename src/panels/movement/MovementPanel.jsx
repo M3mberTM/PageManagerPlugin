@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React from 'react';
 import "./Movement.css";
 import "../../CommonStyles.css";
 import {useSelector} from "react-redux";

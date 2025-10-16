@@ -18,9 +18,11 @@ export const ImportSection = ({dirPlaceholder}) => {
 
     const utilSlicer = useSelector((state) => state.utils)
     const fsSlicer = useSelector((state) => state.fileSystem)
+    const settingsSlicer = useSelector(state=> state.settings)
 
     const importDir = fsSlicer.importDir
     const isFocused = utilSlicer.isFocused
+    const zeroNumbering = settingsSlicer.zeroNumbering
 
     const importFiles = logDecorator(async function importFiles ()  {
 
@@ -28,13 +30,17 @@ export const ImportSection = ({dirPlaceholder}) => {
         if (files === undefined) {
             return
         }
+        let pageNumberAddition = 1
+        if (zeroNumbering) {
+           pageNumberAddition = 0
+        }
         // sorts the files the same way as windows explorer does
         const collator = new Intl.Collator('en', {numeric: true, sensitivity: "base"})
         files.sort((a, b) => collator.compare(a.name, b.name))
         console.log("Imported and sorted files: ", files)
 
         const fileObjects = files.map((file, index) => {
-            return {filePath: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index, id:index}
+            return {filePath: file.nativePath, name: file.name, isDone: false, exportPath: "", pageNumber: index + pageNumberAddition, id:index}
         })
         dispatch(setFiles(fileObjects))
         dispatch(setIsStart(true))

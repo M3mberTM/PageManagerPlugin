@@ -1,4 +1,4 @@
-import React, {useRef} from "react";
+import React, {useRef, useEffect} from "react";
 import {Section} from "../../../components/section/Section";
 import {HighlightButton} from "../../../components/typography/HighlightButton";
 import {useDispatch, useSelector} from "react-redux";
@@ -21,6 +21,8 @@ export const FileSection = ({getPageName}) => {
     const utilSlice = useSelector(state => state.utils)
     const fsSlice = useSelector(state => state.fileSystem)
     const pgSlice = useSelector(state => state.pages)
+    const settingsSlice = useSelector(state => state.settings)
+    const actionSlice = useSelector(state => state.actions)
 
     const isStart = utilSlice.isStart
     const isFocused = utilSlice.isFocused
@@ -28,11 +30,33 @@ export const FileSection = ({getPageName}) => {
     const currentIndex = pgSlice.currentIndex
     const shouldExport = fsSlice.shouldExport
     const exportDir = fsSlice.exportDir
+    const isDocSavedOnOpen = settingsSlice.docSaveOnOpen
+    const previousPageAction = actionSlice.previousPageAction
+    const nextPageAction = actionSlice.nextPageAction
+    const saveAction = actionSlice.saveAction
 
     const scrollRef = useRef()
     const isLoadingFile = useRef(false)
     const currentDoc = useRef(undefined)
     const previousDoc = useRef(undefined)
+
+    useEffect( () => {
+        if (!isStart && isFocused) {
+            goNextPage(false).then()
+        }
+    }, [previousPageAction])
+
+    useEffect(() => {
+        if (!isStart && isFocused) {
+            goNextPage(true).then()
+        }
+    }, [nextPageAction])
+
+    useEffect(() => {
+        if (!isStart && isFocused) {
+            savePage(currentIndex).then()
+        }
+    }, [saveAction])
 
     const elementScrollToView = syncLogDecorator(function elementScrollToView() {
         // noinspection JSUnresolvedReference
@@ -70,7 +94,7 @@ export const FileSection = ({getPageName}) => {
             currentDoc.current = await openDocument(fileEntry)
             console.log("Opened document: ", currentDoc.current)
             dispatch(setCurrentIndex(pageIndex))
-            if (shouldExport && !isExported) {
+            if (shouldExport && !isExported && isDocSavedOnOpen) {
                 await savePage(pageIndex)
             }
             if (isStart) {

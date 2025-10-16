@@ -2,11 +2,14 @@ import {storage} from 'uxp';
 import {PATH_DELIMITER, LOG_FOLDER, SETTINGS_FOLDER, LOG, STORAGE_FOLDER, PRESET_FILE, PROJECT_FILE, SETTINGS_FILE} from "./constants";
 import {createRoot} from "react-dom/client";
 import React from "react";
+import {action, app} from 'photoshop';
+import {useDispatch} from "react-redux";
+import {setNextPageAction, setPreviousPageAction, setSaveAction} from "../redux/actionSlice";
 
 const fs = storage.localFileSystem;
 const DEFAULT_PRESET_VAL = []
 const DEFAULT_PROJECTS_VAL = {}
-const DEFAULT_SETTINGS_VAL = {saveBetweenClose: false, docSaveOnOpen: false, zeroNumbering: true}
+const DEFAULT_SETTINGS_VAL = {docSaveOnOpen: false, zeroNumbering: true}
 
 export const showAlert = (message) => {
     if (LOG) {
@@ -172,5 +175,20 @@ export const spawnDialog = async (dialogElement, title) => {
 
     await dialog.uxpShowModal({
         title: title,
+    })
+}
+
+export const spawnActionListener = async () => {
+    const dispatch = useDispatch()
+    await action.addNotificationListener(['play'], (event, descriptor) => {
+        if (!descriptor._isCommand && descriptor._target[0]._name === 'NextPage') {
+            dispatch(setNextPageAction())
+        } else if (!descriptor._isCommand && descriptor._target[0]._name === 'PreviousPage') {
+            dispatch(setPreviousPageAction())
+        } else if (!descriptor._isCommand && descriptor._target[0]._name === 'SaveFile') {
+            dispatch(setSaveAction())
+        } else {
+            console.log('Event: ', event, '\nDescriptor: ', descriptor)
+        }
     })
 }

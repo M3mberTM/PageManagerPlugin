@@ -15,7 +15,7 @@ const fs = storage.localFileSystem;
 export const Settings = ({dialog}) => {
     useSetUp()
     const dispatch = useDispatch()
-    const settings = useSelector(state => state.settingsSlice)
+    const settings = useSelector(state => state.settings)
     const settingsFile = `${SETTINGS_FOLDER}${PATH_DELIMITER}${SETTINGS_FILE}`
     // useStates
     const [allSettings, setAllSettings] = useState(settings)
@@ -32,10 +32,6 @@ export const Settings = ({dialog}) => {
                 dispatch(setZeroNumbering(value))
                 newSettings = {...newSettings, zeroNumbering: value}
                 break
-            case SETTING_IDS.saveBetweenClose:
-                dispatch(setSaveBetweenClose(value))
-                newSettings = {...newSettings, saveBetweenClose: value}
-                break
             case SETTING_IDS.saveOnOpen:
                 dispatch(setDocSaveOnOpen(value))
                 newSettings = {...newSettings, docSaveOnOpen: value}
@@ -48,15 +44,12 @@ export const Settings = ({dialog}) => {
         await writeToFile(`${dataFolderPath}${PATH_DELIMITER}${settingsFile}`, JSON.stringify(newSettings))
         setAllSettings(newSettings)
     })
+
     return (
         <div>
             <sp-heading>Page Manager Settings</sp-heading>
             <sp-divider size="large"></sp-divider>
             <div style={{marginTop: "10px"}}>
-                <SettingOption isEnabled={allSettings.saveBetweenClose}
-                               settingId={SETTING_IDS.saveBetweenClose}
-                               description={"All information will be saved between closing of the application"}
-                               setter={handleSetting}>Save between opening</SettingOption>
                 <SettingOption isEnabled={allSettings.docSaveOnOpen}
                                settingId={SETTING_IDS.saveOnOpen}
                                description={"Saves the document the moment it is opened."}

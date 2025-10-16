@@ -1,4 +1,4 @@
-import {createDataFolderStruct, readFile} from "./helper";
+import {createDataFolderStruct, readFile, spawnActionListener} from "./helper";
 import {useDispatch} from "react-redux";
 import {storage} from 'uxp';
 import {PATH_DELIMITER, SETTINGS_FOLDER, SETTINGS_FILE, STORAGE_FOLDER, PROJECT_FILE, PRESET_FILE} from "./constants";
@@ -32,6 +32,8 @@ export const useSetUp = () => {
             })
             clearLogs().then(() => console.log("Cleared logs"))
         })
+
+        spawnActionListener().then()
     } else {
         // console.log("Setup was already called!")
     }
