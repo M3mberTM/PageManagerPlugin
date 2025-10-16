@@ -9,7 +9,7 @@ export const ProjectModal = ({dialog, files, saveProject}) => {
             alert("No name was inputted")
             return
         }
-
+        dialog.close()
         saveProject(input)
     }
 
@@ -18,7 +18,7 @@ export const ProjectModal = ({dialog, files, saveProject}) => {
             <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
                 <sp-heading style={{marginTop: 0}}>Saving a project</sp-heading>
                 <sp-body>
-                    You are about to save a project. Please fill in and confirm the information below!
+                    You are about to save a project. Fill in the name and confirm that the files shown are all the things you want to save!
                 </sp-body>
             </div>
             <div>
