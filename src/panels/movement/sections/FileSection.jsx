@@ -20,12 +20,12 @@ export const FileSection = ({getPageName}) => {
     const dispatch = useDispatch()
     const utilSlice = useSelector(state => state.utils)
     const fsSlice = useSelector(state => state.fileSystem)
-    const pageSlice = useSelector(state => state.pages)
+    const pgSlice = useSelector(state => state.pages)
 
     const isStart = utilSlice.isStart
     const isFocused = utilSlice.isFocused
     const loadedFiles = fsSlice.files
-    const currentIndex = pageSlice.currentIndex
+    const currentIndex = pgSlice.currentIndex
     const shouldExport = fsSlice.shouldExport
     const exportDir = fsSlice.exportDir
 
@@ -58,9 +58,11 @@ export const FileSection = ({getPageName}) => {
         if (!isLoadingFile.current) {
             isLoadingFile.current = true
             let fileEntry
+            let isExported = false
             console.log('opening entry: ', loadedFiles[pageIndex])
             if (loadedFiles[pageIndex].exportPath.length > 1) {
                 fileEntry = await fs.getEntryWithUrl(loadedFiles[pageIndex].exportPath)
+                isExported = true
             } else {
                 fileEntry = await fs.getEntryWithUrl(loadedFiles[pageIndex].filePath)
             }
@@ -68,6 +70,10 @@ export const FileSection = ({getPageName}) => {
             currentDoc.current = await openDocument(fileEntry)
             console.log("Opened document: ", currentDoc.current)
             dispatch(setCurrentIndex(pageIndex))
+            console.log('pageIndex: ', pageIndex)
+            if (shouldExport && !isExported) {
+                await savePage(pageIndex)
+            }
             if (isStart) {
                 dispatch(setIsStart(false))
             }
@@ -85,8 +91,7 @@ export const FileSection = ({getPageName}) => {
         dispatch(removeFile(loadedFiles[pageIndex].id))
     })
 
-    const saveCurrentPage = logDecorator(async function saveCurrentPage() {
-        // implement saveCurrentFile. Needs to check for overwrite, needs to update files when saved
+    const savePage = logDecorator(async function savePage(index) {
         if (!shouldExport) {
             alert('Enable Export in the Import Panel')
             return
@@ -95,8 +100,7 @@ export const FileSection = ({getPageName}) => {
             alert('No export folder was selected')
             return
         }
-
-        const pageName = getPageName(loadedFiles[currentIndex])
+        const pageName = getPageName(loadedFiles[index])
         const filePath = `${exportDir}${PATH_DELIMITER}${pageName}.psd`
         console.log('Saving as: ', filePath)
         if (await entryExists(filePath)) {
@@ -107,7 +111,7 @@ export const FileSection = ({getPageName}) => {
             if (!isSaved) {
                 alert(`Something went wrong and your file isn't saved`)
             } else {
-                const page = loadedFiles[currentIndex]
+                const page = loadedFiles[index]
                 const updatedPage = {...page, exportPath: filePath}
                 const updatedFiles = loadedFiles.map((file) => {
                     if (file.id === updatedPage.id) {
@@ -186,7 +190,7 @@ export const FileSection = ({getPageName}) => {
             <MovementControls isFocused={isFocused} isStart={isStart} goToPage={goToPage} goNextPage={goNextPage} changeCurrentPageStatus={changeCurrentPageStatus}/>
             <div class={"fit-row-style"}>
                 <HighlightButton classHandle={"unimportant-button button-100"} clickHandler={() => {
-                    saveCurrentPage().then()
+                    savePage(currentIndex).then()
                 }} isDisabled={isStart || !isFocused}>Save
                 </HighlightButton>
             </div>

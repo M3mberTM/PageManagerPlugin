@@ -23,7 +23,9 @@ export const SavedPatternsSection = ({setTemplate, applyTemplate}) => {
         if (template.length < 1) {
             return
         }
-        setTemplate(applyTemplate(template))
+        applyTemplate(template)
+        setTemplate(template)
+        document.getElementById('template-input').value = template
     })
 
     const deletePreset = logDecorator(async function deletePreset(template)  {
