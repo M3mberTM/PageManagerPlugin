@@ -70,7 +70,6 @@ export const FileSection = ({getPageName}) => {
             currentDoc.current = await openDocument(fileEntry)
             console.log("Opened document: ", currentDoc.current)
             dispatch(setCurrentIndex(pageIndex))
-            console.log('pageIndex: ', pageIndex)
             if (shouldExport && !isExported) {
                 await savePage(pageIndex)
             }

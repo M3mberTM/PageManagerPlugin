@@ -249,33 +249,6 @@ export const MovementPanel = () => {
 
     })
 
-    const setNewPageNum = logDecorator(async function setNewPageNum(newPageNum) {
-        // get page number selected.
-        // get difference of new number to the original. Update all other pages by this amount as well to keep consistency
-
-        const wantedPageNum = parseInt(newPageNum)
-        if (wantedPageNum == NaN) {
-            return
-        }
-        const pageNumDifference = wantedPageNum - pageNumber
-        const ogPage = projectFiles[currentPageIndex]
-        const updatedPage = {...ogPage, pageNumber: ogPage.pageNumber + pageNumDifference}
-        const newFiles = projectFiles.map((item) => {
-            if (item.id === updatedPage.id) {
-                return updatedPage
-            } else if (item.id > updatedPage.id) {
-                return {...item, pageNumber: item.pageNumber + pageNumDifference}
-            } else {
-                return item
-            }
-        })
-        setPageNumber(pageNumber + pageNumDifference)
-        setProjectFiles(newFiles)
-        const pageName = await getPageName(updatedPage)
-        setCurrentPageName(pageName)
-        console.log("Updated page numbers on current and further files", newFiles)
-
-    })
 
     const overwriteCheck = logDecorator(async function overwriteCheck(pageName) {
         if (directories.exportDir.length < 1) {
