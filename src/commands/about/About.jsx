@@ -32,13 +32,13 @@ export const About = ({dialog}) => {
                 I am M3mber, the sole creator of this plugin.
                 <br/>
                 <br/>
-                    This plugin was created mostly for Scanlation to easily move between pages that one works on and save them
-                with a naming scheme. This should lead to overall organization in the persons scanlation. As people say, good organization leads to more
-                productivity.
+                First of all, thanks for using my plugin. This plugin was created for 2 main reasons:<br/>
+                - 1. Higher organization with naming<br/>
+                - 2. Easier time moving between pages while editing or even typesetting
                 <br/>
                 <br/>
-                    Now, it might be very confusing how it works at first, but I documented everything one is able to do on my github so you can read that if you
-                are not sure about something: <sp-link href={"https://github.com/M3mberTM/ReactPagePlugin"}>Repository</sp-link>
+                I created the plugin to be as intuitive as possible, however, if you still don't understand something, you can check out the guide on github.
+                <sp-link href={"https://github.com/M3mberTM/ReactPagePlugin"}>Repository</sp-link>
                 <br/>
                 <br/>
                     If you get an error, or something doesn't work as it should, you can message me. If you have github, you can create a new Issue underneath the

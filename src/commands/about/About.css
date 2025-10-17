@@ -23,6 +23,7 @@
 .pluginDetail {
     padding-top: 5px;
     padding-bottom: 10px;
+    padding-left: 5px;
     display: flex;
     width: 100%;
     margin-bottom: 0;
