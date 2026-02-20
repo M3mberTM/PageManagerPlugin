@@ -53,7 +53,7 @@ export const ImportSection = ({dirPlaceholder}) => {
     })
 
     const getFiles = logDecorator(async function getFiles ()  {
-        const possibleExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb"])
+        const possibleExtensions = storage.fileTypes.images.concat(["jpeg", "psd", "psb", "tiff", "tif"])
         const wildcardExtension = possibleExtensions.join(";*.")
         const allowedFileExtensions = [wildcardExtension].concat(possibleExtensions)
         // for some fucking reason, the user can still interact with the plugin while in file dialog. This disables it

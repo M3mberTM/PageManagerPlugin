@@ -1,5 +1,7 @@
 # Page Manager plugin
 
+---
+
 Page manager is a simple Adobe Photoshop plugin made to simplify organization while working in Scanlation. At the same
 time, it also comes with the benefit of not filling your scratch disks as fast since you only have one page open at a
 time. It aims to simplify and normalize more descriptive naming of files as well as just make the workflow faster.
@@ -13,7 +15,8 @@ time. It aims to simplify and normalize more descriptive naming of files as well
 - **Adjustable settings:** Most of the functionality mentioned above can be changed with settings in the plugin
 
 ## Requirements
-- Adobe Photoshop CC 2020 or newer (the framework used to build this unfortunately doesn't work in lower versions)
+
+- Adobe Photoshop CC 2021 or newer (the framework used to build this unfortunately doesn't work in lower versions)
 
 ## Installation guide
 
@@ -41,6 +44,8 @@ install_win.cmd
 You can find the plugin underneath the Plugins tab in your Photoshop. Click the Page Manager tab and select all the
 panels you would like to use. Settings and About information can also be found underneath this tab, however they cannot
 be open at all times unlike the other panels.
+
+[Click here for a simple guide!](Guide.md)
 
 ## Known issues
 
