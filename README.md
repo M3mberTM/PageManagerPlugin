@@ -24,13 +24,17 @@ time. It aims to simplify and normalize more descriptive naming of files as well
 1. Download the latest release
 2. Extract the archive and execute the installation script for your operating system
 
-   For Windows:
+For Windows:
 ```shell
 install_win.cmd
 ```
 > In case of the script not installing or something goes wrong, you can also install
 > the plugin manually by going into "C:\Users\User\AppData\Roaming\Adobe\UXP\Plugins\External".
 > If any of the Plugins or External folders don't exist, create them!
+
+For Mac:
+> Unfortunately, there is no script for installation for mac users. You will have to install
+> it manually. The plugin should go in here: "/Users/<user>/Library/Application Support/Adobe/UXP/Plugins/External/"
 
 ### Source code installation
 1. Clone the repository
