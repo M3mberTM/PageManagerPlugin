@@ -58,7 +58,7 @@ if not exist "%externalPath%" (
     mkdir "%externalPath%"
 )
 
-set "pluginDir=%~dp0dist"
+set "pluginDir=%~dp0PageManagerPlugin_PS"
 
 xcopy "%pluginDir%" "%externalPath%\PageManagerPlugin" /E /I /H /Y
 echo.

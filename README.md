@@ -28,6 +28,9 @@ time. It aims to simplify and normalize more descriptive naming of files as well
 ```shell
 install_win.cmd
 ```
+> In case of the script not installing or something goes wrong, you can also install
+> the plugin manually by going into "C:\Users\User\AppData\Roaming\Adobe\UXP\Plugins\External".
+> If any of the Plugins or External folders don't exist, create them!
 
 ### Source code installation
 1. Clone the repository
