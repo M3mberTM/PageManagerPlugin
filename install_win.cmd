@@ -64,7 +64,7 @@ xcopy "%pluginDir%" "%externalPath%\PageManagerPlugin" /E /I /H /Y
 echo.
 echo =====INSTALLATION COMPLETE=====
 echo.
-echo Open Photoshop and in the upper menu click the following: [Plugins] -> [PageManager]
+echo Open Photoshop and in the upper menu click the following: Plugins - PageManager
 echo Guide for the plugin is on the Github page...
 pause
 exit
